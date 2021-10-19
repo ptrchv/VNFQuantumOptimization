@@ -6,33 +6,13 @@ import dimod
 import os
 import textwrap
 
-from networkx.algorithms.components.connected import node_connected_component
-
+# %% settings
 init_seed = 111
-graph_size = 7
+graph_size = 10
 edge_prob = 0.5
 switch_prob = 0.7
 
-color_switch = "yellow"
-color_server = "orange"
-
-# %%
-#make node swith or server with probability prob
-def node_class_rand(net, prob):
-    for n in net.nodes:
-        if (random.random() < prob):
-            nx.set_node_attributes(net, {n:{"type":"switch", "color":"yellow"}})
-        else:
-            nx.set_node_attributes(net, {n:{"type":"server", "color":"orange"}})   
-    return net
-
-#draw graph using color property of nodes
-def draw_with_colors(net):
-    cmap = list(nx.get_node_attributes(net, "color").values())
-    nx.draw(net, node_color = cmap, with_labels = True)
-
-# %%
-# problem classes
+# %% Enums
 class TypeVNF(Enum):
     FIREWALL = 1
     NAT = 2
@@ -45,6 +25,7 @@ class NodeResource(Enum):
     MEMORY = 2      #GB
     STORAGE = 3     #GB
 
+# %% VNF and SFC
 class VNF:
     def __init__(self, typeVNF, requirements):
         self.requirements = requirements
@@ -62,7 +43,7 @@ class SFC:
         self.delay = delay          #ms
         self.vnfs = []
 
-    def add_vnf(self, vnf):
+    def append_vnf(self, vnf):
         self.vnfs.append(vnf)
         return self
 
@@ -74,34 +55,56 @@ class SFC:
         str_rep += textwrap.indent(str(self.vnfs[-1]), "\t")
         return str_rep
 
-def rand_init(self, rand_size, points):
-        self.vnfs = random.choices(list(VNF), rand_size)
-        self.entry_point = random.choice(points)
-        self.exit_point = random.choice(points)
-
+# %%random network
 class RandomNetwork:
     def __init__(self, num_nodes, edge_prob, seed=None):
         self.pnet = nx.fast_gnp_random_graph(num_nodes, edge_prob, seed, directed=False)
+        for n in self.pnet.nodes():
+            nx.set_node_attributes(self.pnet, {n: {"server": None}})
+        self.sfcs = []
         self.qubo = None
     
+    #TODO: add node and link informations, colors of server/entry_exit_points
     def draw(self):
         nx.draw(self.pnet, with_labels = True)
         
-    def get_graph(self):
-        return self.pnet
-
-    def add_node_resources(self, nodeId, resources):
-        for k,v in resources:
-            nx.add_node_attributes(self.pnet, {nodeId : {k : v.name}})
-
-    def add_link_resources(self, nodeId1, nodeId2, bandwidth, delay):
-        #nx.set_node_attributes(sepnet)
-        self.pnet
+    def nodes(self):
+        return self.pnet.nodes
     
-    def get_qubo(self, update = True):
-        if not update:
-            return self.qubo
+    def links(self):
+        return self.pnet.edges
+
+    def add_node_resources(self, nodeID, resources):
+        #check if node is entry/exit point
+        if(self.pnet.nodes[nodeID]["server"] == False):
+            raise ValueError("Server cannot be entry point")
+        #make node server (unaltered if it already is)
+        self.pnet.nodes[nodeID]["server"] = True
+        for k,v in resources.items():
+            nx.set_node_attributes(self.pnet, {nodeID : {k.name : v}})
+
+    def add_link_resources(self, edgeID, bandwidth, delay):
+        nx.set_edge_attributes(self.pnet, {edgeID : {"delay":delay, "bandwidth":bandwidth}})
+        return self
+
+    def add_sfc(self, sfc, startNodeID, endNodeID):
+        #chek if entry/exit points are servers
+        if(self.pnet.nodes[startNodeID]["server"] == True):
+            raise ValueError("Server cannot be entry point")
+        if(self.pnet.nodes[endNodeID]["server"] == True):
+            raise ValueError("Server cannot be exit point")
+
+        #make node entry/exit (unaltered if they are already)
+        self.pnet[startNodeID]["server"] = False
+        self.pnet[endNodeID]["server"] = False
+
+        #add sfc and save entry and exit points
+        self.sfcs.append({sfc: (startNodeID, endNodeID)})
+        return self
+    
+    def get_qubo(self):
         return None
+
 
 # %%
 net = RandomNetwork(graph_size, edge_prob, init_seed)
@@ -118,8 +121,27 @@ vnf1 = VNF(TypeVNF.FIREWALL, req1)
 vnf2 = VNF(TypeVNF.IDS, req2)
 vnf3 = VNF(TypeVNF.BUSINESS_LOGIC, req3)
 #sfc
-sfc = SFC("MOBILE_API",500, 3)
-sfc.add_vnf(vnf1).add_vnf(vnf2).add_vnf(vnf3)
-
+sfc = SFC("MOBILE_API", 500, 3)
+sfc = sfc.append_vnf(vnf1).append_vnf(vnf2).append_vnf(vnf3)
 print(sfc)
 
+# %% Node and link resources
+#add node resources
+node_res = {NodeResource.CPU : 4, NodeResource.MEMORY : 512, NodeResource.STORAGE : 5000}
+for n in list(net.nodes())[:-3]:
+    net.add_node_resources(n, node_res)
+
+#add link resources
+for e in net.links():
+    net.add_link_resources(e, 1.5, 0.2)
+
+#print nodes and links
+print("NODES:")
+print(net.nodes().data())
+print("LINKS:")
+print(net.links().data())
+
+
+# %%
+
+# %%
