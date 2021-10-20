@@ -1,6 +1,5 @@
 # %%
 import networkx as nx
-import random
 from enum import Enum
 import dimod
 import os
@@ -74,14 +73,13 @@ class RandomNetwork:
     def links(self):
         return self.pnet.edges
 
-    def add_node_resources(self, nodeID, resources):
+    def add_node_resources(self, nodeID, resources, costs):
         #check if node is entry/exit point
         if(self.pnet.nodes[nodeID]["server"] == False):
             raise ValueError("Server cannot be entry point")
         #make node server (unaltered if it already is)
         self.pnet.nodes[nodeID]["server"] = True
-        for k,v in resources.items():
-            nx.set_node_attributes(self.pnet, {nodeID : {k.name : v}})
+        nx.set_node_attributes(self.pnet, {nodeID : {"res" : resources, "cost": costs}})
 
     def add_link_resources(self, edgeID, bandwidth, delay):
         nx.set_edge_attributes(self.pnet, {edgeID : {"delay":delay, "bandwidth":bandwidth}})
@@ -95,16 +93,53 @@ class RandomNetwork:
             raise ValueError("Server cannot be exit point")
 
         #make node entry/exit (unaltered if they are already)
-        self.pnet[startNodeID]["server"] = False
-        self.pnet[endNodeID]["server"] = False
+        self.pnet.nodes[startNodeID]["server"] = False
+        self.pnet.nodes[endNodeID]["server"] = False
 
         #add sfc and save entry and exit points
-        self.sfcs.append({sfc: (startNodeID, endNodeID)})
+        self.sfcs.append((sfc, (startNodeID, endNodeID)))
         return self
     
     def get_qubo(self):
-        return None
+        bqm = dimod.BinaryQuadraticModel(dimod.BINARY)
+        #create all variables
+        for n, v in self.pnet.nodes.items():
+            if(v["server"] is None):
+                print(f"[WARNING]: Node {n} won't be considered")
+                continue
+            sID = 0
+            for s in self.sfcs:
+                fID = 0
+                for f in s[0].vnfs:
+                    bqm.add_variable(f"x_N{n}_C{sID}_F{fID}")
+                    fID+=1
+                sID+=1
+        # print(bqm.variables)
+        # bqm.fix_variable("x_N1_C0_F0", 1)
+        # print(bqm.variables)
 
+        #node cost
+        for var in bqm.variables:       
+            ids = self.var_to_ids(var)
+            node, sfc, vnf = self.ids_to_objs(ids)
+            # print(node, sfc, vnf)
+
+            # skip in node is entry/exit point
+            if(node["server"] == False):
+                continue
+            for k,v in vnf.requirements.items():
+                pass
+                
+
+
+    def var_to_ids(self, var):
+        return [int(id[1]) for id in var.split("_")[1:]]
+    
+    def ids_to_objs(self, ids):
+        node = self.pnet.nodes[ids[0]]
+        sfc = self.sfcs[ids[1]][0]
+        vnf = sfc.vnfs[ids[2]]
+        return node, sfc, vnf
 
 # %%
 net = RandomNetwork(graph_size, edge_prob, init_seed)
@@ -125,23 +160,29 @@ sfc = SFC("MOBILE_API", 500, 3)
 sfc = sfc.append_vnf(vnf1).append_vnf(vnf2).append_vnf(vnf3)
 print(sfc)
 
-# %% Node and link resources
-#add node resources
+# %%
+# add node resources
 node_res = {NodeResource.CPU : 4, NodeResource.MEMORY : 512, NodeResource.STORAGE : 5000}
+node_costs = {NodeResource.CPU : 1, NodeResource.MEMORY : 1, NodeResource.STORAGE : 1}
 for n in list(net.nodes())[:-3]:
-    net.add_node_resources(n, node_res)
+    net.add_node_resources(n, node_res, node_costs)
 
-#add link resources
+# add link resources
 for e in net.links():
     net.add_link_resources(e, 1.5, 0.2)
 
-#print nodes and links
+# print nodes and links
 print("NODES:")
 print(net.nodes().data())
 print("LINKS:")
 print(net.links().data())
 
+#%%
+# Add sfc to network
+nodeIDs = list(net.nodes()) # only IDs
+net = net.add_sfc(sfc, nodeIDs[-2], nodeIDs[-1])
+print(net.nodes().data())
 
 # %%
+net.get_qubo()
 
-# %%
