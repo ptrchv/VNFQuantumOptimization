@@ -5,6 +5,8 @@ import dimod
 import os
 import textwrap
 
+from networkx.generators.classic import balanced_tree
+
 # %% settings
 init_seed = 111
 graph_size = 10
@@ -19,10 +21,18 @@ class TypeVNF(Enum):
     PROXY = 4
     BUSINESS_LOGIC = 5
 
-class NodeResource(Enum):
+class NodeProperty(Enum):
     CPU = 1         #num_cpu
     MEMORY = 2      #GB
     STORAGE = 3     #GB
+
+class LinkProperty(Enum):
+    BANDWIDTH = 1   #GBps
+    DELAY = 2       #ms
+
+class PropertyType(Enum):
+    RESOURCE = 1
+    COST = 2
 
 # %% VNF and SFC
 class VNF:
@@ -63,7 +73,7 @@ class RandomNetwork:
         self.sfcs = []
         self.qubo = None
     
-    #TODO: add node and link informations, colors of server/entry_exit_points
+    # TODO: add node and link informations, colors of server/entry_exit_points
     def draw(self):
         nx.draw(self.pnet, with_labels = True)
         
@@ -74,15 +84,19 @@ class RandomNetwork:
         return self.pnet.edges
 
     def add_node_resources(self, nodeID, resources, costs):
-        #check if node is entry/exit point
+        # check if node is already entry/exit point
         if(self.pnet.nodes[nodeID]["server"] == False):
             raise ValueError("Server cannot be entry point")
-        #make node server (unaltered if it already is)
-        self.pnet.nodes[nodeID]["server"] = True
-        nx.set_node_attributes(self.pnet, {nodeID : {"res" : resources, "cost": costs}})
 
-    def add_link_resources(self, edgeID, bandwidth, delay):
-        nx.set_edge_attributes(self.pnet, {edgeID : {"delay":delay, "bandwidth":bandwidth}})
+        # make node server (unaltered if it already is)
+        self.pnet.nodes[nodeID]["server"] = True
+
+        # add node properties as cost and resource 
+        atr = {nodeID : {PropertyType.RESOURCE : resources, PropertyType.COST : costs}}
+        nx.set_node_attributes(self.pnet, atr)
+
+    def add_link_resources(self, edgeID, properties):
+        nx.set_edge_attributes(self.pnet, {edgeID : properties})
         return self
 
     def add_sfc(self, sfc, startNodeID, endNodeID):
@@ -119,7 +133,7 @@ class RandomNetwork:
         # print(bqm.variables)
 
         #node cost
-        for var in bqm.variables:       
+        for var in bqm.variables:
             ids = self.var_to_ids(var)
             node, sfc, vnf = self.ids_to_objs(ids)
             # print(node, sfc, vnf)
@@ -128,9 +142,8 @@ class RandomNetwork:
             if(node["server"] == False):
                 continue
             for k,v in vnf.requirements.items():
-                pass
+                print(k, v)
                 
-
 
     def var_to_ids(self, var):
         return [int(id[1]) for id in var.split("_")[1:]]
@@ -148,9 +161,9 @@ net.draw()
 
 #%% TEST VNF and SFC classes
 #requirements
-req1 = {NodeResource.CPU : 3, NodeResource.MEMORY : 3.5, NodeResource.STORAGE : 11}
-req2 = {NodeResource.CPU : 1, NodeResource.MEMORY : 5, NodeResource.STORAGE : 15}
-req3 = {NodeResource.CPU : 2, NodeResource.MEMORY : 12, NodeResource.STORAGE : 60}
+req1 = {NodeProperty.CPU : 3, NodeProperty.MEMORY : 3.5, NodeProperty.STORAGE : 11}
+req2 = {NodeProperty.CPU : 1, NodeProperty.MEMORY : 5, NodeProperty.STORAGE : 15}
+req3 = {NodeProperty.CPU : 2, NodeProperty.MEMORY : 12, NodeProperty.STORAGE : 60}
 #vnf
 vnf1 = VNF(TypeVNF.FIREWALL, req1)
 vnf2 = VNF(TypeVNF.IDS, req2)
@@ -162,14 +175,15 @@ print(sfc)
 
 # %%
 # add node resources
-node_res = {NodeResource.CPU : 4, NodeResource.MEMORY : 512, NodeResource.STORAGE : 5000}
-node_costs = {NodeResource.CPU : 1, NodeResource.MEMORY : 1, NodeResource.STORAGE : 1}
+node_res = {NodeProperty.CPU : 4, NodeProperty.MEMORY : 512, NodeProperty.STORAGE : 5000}
+node_costs = {NodeProperty.CPU : 1, NodeProperty.MEMORY : 1, NodeProperty.STORAGE : 1}
 for n in list(net.nodes())[:-3]:
     net.add_node_resources(n, node_res, node_costs)
 
 # add link resources
+link_prop = {LinkProperty.BANDWIDTH:1.5, LinkProperty.DELAY:0.2}
 for e in net.links():
-    net.add_link_resources(e, 1.5, 0.2)
+    net.add_link_resources(e, link_prop)
 
 # print nodes and links
 print("NODES:")
@@ -186,3 +200,7 @@ print(net.nodes().data())
 # %%
 net.get_qubo()
 
+
+# %%
+
+# %%
