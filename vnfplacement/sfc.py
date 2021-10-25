@@ -13,6 +13,14 @@ class SFC:
     def append_vnf(self, vnf):
         self.vnfs.append(vnf)
         return self
+    
+    def get_properties(self, ptype):
+        if ptype in self.properties.keys():
+            return self.properties[ptype]
+        return dict()
+
+    def __len__(self):
+        return len(self.vnfs)
 
     def __str__(self):
         #name

@@ -1,17 +1,19 @@
 # %%
+from networkx.algorithms.traversal import depth_first_search
 from vnfplacement.vnf import VNF
 from vnfplacement.sfc import SFC
-from vnfplacement.random_network import RandomNetwork
+from vnfplacement.problem_network import ProblemNetwork
+from vnfplacement.qubo_form import QuboFormulation
 from vnfplacement.defines import TypeVNF, NodeProperty, LinkProperty, PropertyType
 
 # %% settings
 init_seed = 111
-graph_size = 10
+graph_size = 5
 edge_prob = 0.5
 switch_prob = 0.7
 
 # %%
-net = RandomNetwork(graph_size, edge_prob, init_seed)
+net = ProblemNetwork(graph_size, edge_prob, init_seed)
 net.draw()
 # print(nx.adjacency_matrix(net.pnet))
 
@@ -42,11 +44,17 @@ for n in list(net.nodes())[:-3]:
     net.set_node_properties(n, PropertyType.COST, node_costs)
 
 # add link resources
-link_res = {LinkProperty.BANDWIDTH : 1.5, LinkProperty.DELAY : 0.2}
-link_cost = {LinkProperty.BANDWIDTH : 1}
 for e in net.links():
-    net.set_link_properties(e, PropertyType.RESOURCE, link_res)
-    net.set_link_properties(e, PropertyType.COST, link_cost)
+    net.set_link_properties(e, PropertyType.RESOURCE, {LinkProperty.BANDWIDTH : 1.5})
+    net.set_link_properties(e, PropertyType.COST, {LinkProperty.BANDWIDTH : 1})
+    net.set_link_properties(e, PropertyType.DRAWBACK, {LinkProperty.DELAY : 0.2})
+
+#add properties for detatched link
+net.set_detatched_properties(PropertyType.RESOURCE, {LinkProperty.BANDWIDTH : 0})
+net.set_detatched_properties(PropertyType.COST, {LinkProperty.BANDWIDTH : 1})
+net.set_detatched_properties(PropertyType.DRAWBACK, {LinkProperty.DELAY : 100})
+
+
 
 # print nodes and links
 # print("NODES:")
@@ -61,7 +69,8 @@ net = net.add_sfc(sfc, nodeIDs[-2], nodeIDs[-1])
 #print(net.nodes().data())
 
 # %%
-net.get_qubo()
+qf = QuboFormulation()
+qf.generate_qubo(net)
 
 
 # %%
