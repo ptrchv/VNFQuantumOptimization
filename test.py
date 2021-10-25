@@ -8,9 +8,8 @@ from vnfplacement.defines import TypeVNF, NodeProperty, LinkProperty, PropertyTy
 
 # %% settings
 init_seed = 111
-graph_size = 5
+graph_size = 7
 edge_prob = 0.5
-switch_prob = 0.7
 
 # %%
 net = ProblemNetwork(graph_size, edge_prob, init_seed)

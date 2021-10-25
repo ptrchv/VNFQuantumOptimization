@@ -10,71 +10,103 @@ class QuboFormulation:
         return self.qubo
 
     def var_to_ids(self, var):
-        return [int(id[1]) for id in var.split("_")[1:]]
-    
+        var = var.replace("(","").replace(")","")
+        ids = [id[1:] for id in var.split("_")[1:]]
+        linkID = (int(ids[0].split("-")[0]), int(ids[0].split("-")[1]))
+        sID = int(ids[1])
+        fID = ids[2].split("-")
+        fID[0] = int(fID[0]) if fID[0] != "START" else fID[0]
+        fID[1] = int(fID[1]) if fID[1] != "END" else fID[1]
+        fID = (fID[0], fID[1])
+        return linkID, sID, fID
+
     def generate_qubo(self, netw):
         # create bmq instance
         bqm = dimod.BinaryQuadraticModel(dimod.BINARY)
 
-        # create all variables
-        for nodeID, node in netw.nodes().items():
-            if not netw.is_used(nodeID):
-                print(f"[WARNING]: Node {nodeID} won't be considered")
-                continue
-            sID = 0
-            for s in netw.sfcs:
-                fID = 0
-                for f in s[0].vnfs:
-                    bqm.add_variable(f"x_N{nodeID}_C{sID}_F{fID}")
-                    fID+=1
-                sID+=1
+        # check if sfc are not empty
+        for s in netw.sfcs:
+            if not s[0].vnfs:
+                raise ValueError(f"{s} is an empty SFC")
+
+        # create variables
+        self.create_variables(bqm, netw)
         print(bqm.variables)
-        
-        # node cost
+
         for var in bqm.variables:
-            ids = self.var_to_ids(var)
-            node, sfc, vnf = netw.ids_to_objs(ids)
+            print(self.var_to_ids(var))
 
-            # skip in node is entry/exit point
-            if netw.is_entry(ids[0]) or not netw.is_used(ids[0]):
+        # node cost
+
+
+    def create_variables(self, bqm, netw):
+        # create all variables
+        for linkID in netw.links().keys():
+            # check link edges are valid
+            if not netw.is_used(linkID[0]) or not netw.is_used(linkID[1]):
+                print(f"[WARNING]: Link {linkID} won't be considered")
                 continue
+            # check if both are servers
+            if netw.is_server(linkID[0]) and netw.is_server(linkID[1]):
+                sID = 0
+                for s in netw.sfcs:
+                    for fID in range(len(s[0].vnfs)-1):
+                        bqm.add_variable(f"y_L({linkID[0]}-{linkID[1]})_C{sID}_F({fID}-{fID+1})")
+                    sID+=1
+            #check if first is server
+            elif netw.is_server(linkID[0]) or netw.is_server(linkID[1]):
+                sID = 0
+                for s in netw.sfcs:
+                    bqm.add_variable(f"y_L({linkID[0]}-{linkID[1]})_C{sID}_F(START-0)")
+                    bqm.add_variable(f"y_L({linkID[0]}-{linkID[1]})_C{sID}_F({len(s[0].vnfs)}-END)")
+                sID += 1
+        return bqm
 
-            # add terms
-            for k, resQt in vnf.requirements.items():
-                resCost = node[PropertyType.COST][k]
-                bqm.add_linear(var, resCost * resQt)
+        # # node cost
+        # for var in bqm.variables:
+        #     ids = self.var_to_ids(var)
+        #     node, sfc, vnf = netw.ids_to_objs(ids)
 
-        # link cost
-        for var1 in bqm.variables:
-            for var2 in bqm.variables:
-                ids1 = self.var_to_ids(var1)
-                ids2 = self.var_to_ids(var2)
+        #     # skip in node is entry/exit point
+        #     if netw.is_entry(ids[0]) or not netw.is_used(ids[0]):
+        #         continue
 
-                # different nodes, same chain, consecutive vnfs
-                if ids1[0] == ids2[0]:
-                    continue
-                if ids1[1] != ids2[1]:
-                    continue
-                if ids1[2] != ids2[2] + 1:
-                    continue
+        #     # add terms
+        #     for k, resQt in vnf.requirements.items():
+        #         resCost = node[PropertyType.COST][k]
+        #         bqm.add_linear(var, resCost * resQt)
 
-                # get sfc properties
-                node, sfc, vnf = netw.ids_to_objs(ids)
-                sfc_res = sfc.get_properties(PropertyType.RESOURCE)
+        # # link cost
+        # for var1 in bqm.variables:
+        #     for var2 in bqm.variables:
+        #         ids1 = self.var_to_ids(var1)
+        #         ids2 = self.var_to_ids(var2)
 
-                # get edge properties           
-                edge_cost = None
-                if netw.are_linked(ids1[0], ids2[0]):
-                    edge_cost = netw.get_link(ids1[0], ids2[0])[PropertyType.COST]
-                else:
-                    edge_cost = netw.detatched[PropertyType.COST]
+        #         # different nodes, same chain, consecutive vnfs
+        #         if ids1[0] == ids2[0]:
+        #             continue
+        #         if ids1[1] != ids2[1]:
+        #             continue
+        #         if ids1[2] != ids2[2] + 1:
+        #             continue
 
-                # add quadratic terms
-                for res, resQt in sfc_res.items():
-                    resCost = edge_cost[res] # exception if not present
-                    bqm.add_quadratic(var1, var2, resQt*resCost)
+        #         # get sfc properties
+        #         node, sfc, vnf = netw.ids_to_objs(ids)
+        #         sfc_res = sfc.get_properties(PropertyType.RESOURCE)
 
-        print(bqm)
+        #         # get edge properties           
+        #         edge_cost = None
+        #         if netw.are_linked(ids1[0], ids2[0]):
+        #             edge_cost = netw.get_link(ids1[0], ids2[0])[PropertyType.COST]
+        #         else:
+        #             edge_cost = netw.detatched[PropertyType.COST]
+
+        #         # add quadratic terms
+        #         for res, resQt in sfc_res.items():
+        #             resCost = edge_cost[res] # exception if not present
+        #             bqm.add_quadratic(var1, var2, resQt*resCost)
+
+        # print(bqm)
             # print(node, sfc, vnf)
 
         #     # skip in node is entry/exit point
