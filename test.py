@@ -48,11 +48,6 @@ for e in net.links():
     net.set_link_properties(e, PropertyType.COST, {LinkProperty.BANDWIDTH : 1})
     net.set_link_properties(e, PropertyType.DRAWBACK, {LinkProperty.DELAY : 0.2})
 
-#add properties for detatched link
-net.set_detatched_properties(PropertyType.RESOURCE, {LinkProperty.BANDWIDTH : 0})
-net.set_detatched_properties(PropertyType.COST, {LinkProperty.BANDWIDTH : 1})
-net.set_detatched_properties(PropertyType.DRAWBACK, {LinkProperty.DELAY : 100})
-
 
 
 # print nodes and links
