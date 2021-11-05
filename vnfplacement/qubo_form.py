@@ -1,13 +1,16 @@
 from os import link
 import dimod
 from vnfplacement.defines import TypeVNF, NodeProperty, LinkProperty, PropertyType
+import math
 
 class QuboFormulation:
 
-    def __init__(self):
+    def __init__(self, discretization):
         self.qubo = None
+        self._discretization = discretization
 
-    def __var_to_ids(self, var):
+    #extracts information from varialble name
+    def _var_to_ids(self, var):
         var = var.replace("(","").replace(")","")
         ids = [id[1:] for id in var.split("_")[1:]]
         linkID = (int(ids[0].split("-")[0]), int(ids[0].split("-")[1]))
@@ -19,7 +22,7 @@ class QuboFormulation:
         return linkID, sID, fID
     
     # create variables for formulation
-    def __create_variables(self, bqm, netw):
+    def _create_variables(self, bqm, netw):
         for linkID in netw.links().keys():
             # check link edges are valid
             if not netw.is_used(linkID[0]) or not netw.is_used(linkID[1]):
@@ -40,10 +43,10 @@ class QuboFormulation:
                     bqm.add_variable(f"y_L({linkID[0]}-{linkID[1]})_C{sID}_F({max(sfc.vnfs().keys())}-END)")
         return bqm
 
-    def __add_node_cost(self, bqm, netw):
+    def _add_node_cost(self, bqm, netw):
         for var in bqm.variables:
             #server is used if exit link is used
-            linkID, sID, fID = self.__var_to_ids(var)
+            linkID, sID, fID = self._var_to_ids(var)
             nodeID = linkID[0]
 
             # skip enty/exit points
@@ -57,10 +60,10 @@ class QuboFormulation:
                 resCost = node[PropertyType.COST][req]
                 bqm.add_linear(var, resCost * resQt)
 
-    def __add_link_cost(self, bqm, netw):
+    def _add_link_cost(self, bqm, netw):
         for var in bqm.variables:
             # server is used if exit link is used
-            linkID, sID, fID = self.__var_to_ids(var)
+            linkID, sID, fID = self._var_to_ids(var)
 
             # get sfc resources and link costs
             sfc_res = netw.sfcs()[sID].get_properties(PropertyType.RESOURCE)
@@ -70,6 +73,38 @@ class QuboFormulation:
             for res, resQt in sfc_res.items():
                 resCost = link_cost[res] # exception if not present
                 bqm.add_linear(var, resQt*resCost)
+    
+    def _node_res_constraint(self, bqm, netw):
+        pass
+        # for doing this you can use a constrained binary model
+        # but how are the slack variables generated?
+
+        # for nID, nodeP in netw.nodes().items():
+        #     if not netw.is_server(nID):
+        #         continue
+        #     for res, resQt in nodeP[PropertyType.RESOURCE].items():
+        #         for
+        #         print(math.ceil(resQt/self._discretization[res]))
+        cqm = dimod.ConstrainedQuadraticModel()
+        cqm.set_objective(bqm)
+        bqm_constr = dimod.BinaryQuadraticModel(dimod.BINARY)
+        bqm_constr.add_linear("y_L(0-3)_C0_F(0-1)", 11)
+        bqm_constr.add_linear("y_L(0-3)_C0_F(1-2)", 12)
+        bqm_constr.add_linear("y_L(0-5)_C0_F(START-0)", 13)
+        bqm_constr.add_linear("y_L(0-5)_C0_F(2-END)", 14)
+        bqm_constr.add_linear("y_L(0-6)_C0_F(START-0)", 15)
+        bqm_constr.add_linear("y_L(0-6)_C0_F(2-END)", 16)
+        cqm.add_constraint(bqm_constr, sense="<=", rhs=5000, label='node_storage')
+        print(bqm_constr)
+        print(cqm)
+        print(cqm.variables)
+        print(cqm.constraints)
+        
+        
+        
+        # print(cqm)
+        # print(cqm.variables)
+        
 
     def generate_qubo(self, netw):
         # create bmq instance
@@ -81,10 +116,12 @@ class QuboFormulation:
                 raise ValueError(f"{s} is an empty SFC")
 
         # build model
-        self.__create_variables(bqm, netw)
-        self.__add_node_cost(bqm, netw)
-        self.__add_link_cost(bqm, netw)           
-        print(bqm)
+        self._create_variables(bqm, netw)
+        self._add_node_cost(bqm, netw)
+        self._add_link_cost(bqm, netw)
+        self._node_res_constraint(bqm, netw)           
+        #print(bqm)
+        #print(bqm.variables)
                 
 
     

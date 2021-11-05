@@ -1,4 +1,5 @@
 # %%
+from dimod.discrete.discrete_quadratic_model import LinearTriplets
 from networkx.algorithms.traversal import depth_first_search
 from vnfplacement.vnf import VNF
 from vnfplacement.sfc import SFC
@@ -63,7 +64,14 @@ net = net.add_sfc(sfc, nodeIDs[-2], nodeIDs[-1])
 #print(net.nodes().data())
 
 # %%
-qf = QuboFormulation()
+discretization = {
+    LinkProperty.BANDWIDTH : 0.2,
+    LinkProperty.DELAY : 0.1,
+    NodeProperty.CPU : 1,
+    NodeProperty.MEMORY : 4,
+    NodeProperty.STORAGE : 128
+}
+qf = QuboFormulation(discretization)
 qf.generate_qubo(net)
 
 
