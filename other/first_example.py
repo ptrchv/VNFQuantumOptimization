@@ -17,8 +17,8 @@ import config
 import networkx as nx
 
 # %%
-client = Client.from_config(token=config.api_token)
-print(client.get_solvers())
+# client = Client.from_config(token=config.api_token)
+# print(client.get_solvers())
 
 # %%
 # Create empty graph

@@ -103,9 +103,13 @@ qf = QuboFormulation(discretization)
 qf.generate_qubo(net)
 
 # %%
-solver = dimod.ExactSolver()
-# device = DWaveSampler()
-# solver = EmbeddingComposite(device)
-result = solver.sample(qf.qubo, num_reads = 20)
-print(result)
+# solver = dimod.ExactSolver()
+# # device = DWaveSampler()
+# # solver = EmbeddingComposite(device)
+# result = solver.sample(qf.qubo, num_reads = 20)
+# print(result.lowest())
 
+
+# %%
+
+# %%

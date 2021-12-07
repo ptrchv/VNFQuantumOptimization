@@ -93,30 +93,44 @@ class QuboFormulation:
                 bqm.add_linear(var, resQt*resCost)
     
     def _node_res_constraint(self, bqm, netw):
-        pass
+        
         # for doing this you can use a constrained binary model
-        # but how are the slack variables generated?
+        # but how are the slack variables generated?       
 
-        # for nID, nodeP in netw.nodes().items():
-        #     if not netw.is_server(nID):
-        #         continue
-        #     for res, resQt in nodeP[PropertyType.RESOURCE].items():
-        #         for
-        #         print(math.ceil(resQt/self._discretization[res]))
-        cqm = dimod.ConstrainedQuadraticModel()
-        cqm.set_objective(bqm)
-        bqm_constr = dimod.BinaryQuadraticModel(dimod.BINARY)
-        bqm_constr.add_linear("y_L(0-3)_C0_F(0-1)", 11)
-        bqm_constr.add_linear("y_L(0-3)_C0_F(1-2)", 12)
-        bqm_constr.add_linear("y_L(0-5)_C0_F(START-0)", 13)
-        bqm_constr.add_linear("y_L(0-5)_C0_F(2-END)", 14)
-        bqm_constr.add_linear("y_L(0-6)_C0_F(START-0)", 15)
-        bqm_constr.add_linear("y_L(0-6)_C0_F(2-END)", 16)
-        cqm.add_constraint(bqm_constr, sense="<=", rhs=5000, label='node_storage')
-        print(bqm_constr)
-        print(cqm)
-        print(cqm.variables)
-        print(cqm.constraints)
+        for nID, nodeP in netw.nodes.items():
+            #variables containing nodeID
+            varList = [v for v in list(bqm.variables) if self._var_to_ids(v)[0][0] == nID]
+            print(varList)                   
+            for res, resQt in nodeP[PropertyType.RESOURCE].items():
+                bqmConstraint = dimod.BinaryQuadraticModel(dimod.BINARY)
+                print(res, resQt)
+                for v in varList:
+                    linkID, sID, fID = self._var_to_ids(v)
+                    resConsumed = netw.sfcs[sID].vnfs[fID[0]].requirements[res]
+                    # bqmConstraint.add_linear_inequality_constraint --> this is not present in the documentation
+                    #https://support.dwavesys.com/hc/en-us/community/posts/4413670491159-BQM-problem-adding-an-inequality-constraint
+                break
+            #     # for
+            #     # print(math.ceil(resQt/self._discretization[res]))
+            #     print(nID, res)
+
+        
+        
+        
+        # cqm = dimod.ConstrainedQuadraticModel()
+        # cqm.set_objective(bqm)
+        # bqm_constr = dimod.BinaryQuadraticModel(dimod.BINARY)
+        # bqm_constr.add_linear("y_L(0-3)_C0_F(0-1)", 11)
+        # bqm_constr.add_linear("y_L(0-3)_C0_F(1-2)", 12)
+        # bqm_constr.add_linear("y_L(0-5)_C0_F(START-0)", 13)
+        # bqm_constr.add_linear("y_L(0-5)_C0_F(2-END)", 14)
+        # bqm_constr.add_linear("y_L(0-6)_C0_F(START-0)", 15)
+        # bqm_constr.add_linear("y_L(0-6)_C0_F(2-END)", 16)
+        # cqm.add_constraint(bqm_constr, sense="<=", rhs=5000, label='node_storage')
+        # print(bqm_constr)
+        # print(cqm)
+        # print(cqm.variables)
+        # print(cqm.constraints)
         
         
         
@@ -143,14 +157,15 @@ class QuboFormulation:
         self._create_variables(bqm, netw)
         self._add_node_cost(bqm, netw)
         self._add_link_cost(bqm, netw)
+        self._node_res_constraint(bqm, netw)
         
-        # self._node_res_constraint(bqm, netw)           
-        print(bqm)
-        print("")
-        print(len(bqm.variables))
-        print(bqm.variables)
+        # # self._node_res_constraint(bqm, netw)           
+        # print(bqm)
+        # print("")
+        # print(len(bqm.variables))
+        # print(bqm.variables)
 
-        self._qubo = bqm
+        # self._qubo = bqm
         
 
 
