@@ -7,6 +7,7 @@ class SFC:
         self._vnfs = []
         self._properties = {}
 
+    @property
     def vnfs(self):
         return {k:v for k,v in enumerate(self._vnfs)}
 
