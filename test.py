@@ -63,7 +63,7 @@ vnf3 = VNF(TypeVNF.BUSINESS_LOGIC, req3)
 sfc = SFC("SIMPLE SFC")
 sfc.set_properties(PropertyType.DRAWBACK, {LinkProperty.DELAY : 1})
 sfc.set_properties(PropertyType.RESOURCE, {LinkProperty.BANDWIDTH: 0.5})
-sfc = sfc.append_vnf(vnf1).append_vnf(vnf2).append_vnf(vnf3).append_vnf(vnf2)
+sfc = sfc.append_vnf(vnf1).append_vnf(vnf2).append_vnf(vnf3)#.append_vnf(vnf2)
 
 # sfc2
 sfc2 = SFC("SIMPLE SFC2")
@@ -96,53 +96,53 @@ for e in net.links:
 #%%
 # Add sfc to network
 net = net.add_sfc(sfc)
-net = net.add_sfc(sfc)
+#net = net.add_sfc(sfc)
 
 # %%
 discretization = {
     LinkProperty.BANDWIDTH : 0.2,
     LinkProperty.DELAY : 0.1,
     NodeProperty.CPU : 1,
-    NodeProperty.MEMORY : 4,
+    NodeProperty.MEMORY : 1,
     NodeProperty.STORAGE : 128
 }
 qf = QuboFormulation(discretization)
 qf.generate_qubo(net)
 #print(qf.qubo.variables)
-print(len(qf.qubo.variables))
+print("Number of variables:",len(qf.qubo.variables))
 
 # %%
-#solver = dimod.ExactSolver()
-solver = tabu.TabuSampler()
-# device = DWaveSampler()
-# solver = EmbeddingComposite(device)
-result = solver.sample(qf.qubo)
-print(result.lowest())
+# #solver = dimod.ExactSolver()
+# solver = tabu.TabuSampler()
+# # device = DWaveSampler()
+# # solver = EmbeddingComposite(device)
+# result = solver.sample(qf.qubo)
+# print(result.lowest())
 
 
 # %%
 # print variables at "1" in each solution
-sampleset = result.lowest()
-samples = sampleset.samples()
-for best in samples:
-    cont = 0
-    varList = []
-    for var, val in best.items():
-        if val == 1:
-            varList.append(var)
-    print(varList)
-    break
+# sampleset = result.lowest()
+# samples = sampleset.samples()
+# for best in samples:
+#     cont = 0
+#     varList = []
+#     for var, val in best.items():
+#         if val == 1:
+#             varList.append(var)
+#     print(varList)
+#     break
 
 # %%
 # "allocation constraint" violation for 1 chain problem
-print("Allocation violations:")
-sampleset = result.lowest()
-samples = sampleset.samples()
-for best in samples:
-    cont = 0
-    varList = []
-    for var, val in best.items():
-        if val == 1:
-            varList.append(var)
-    if len(varList) != 6:
-        print(varList)
+# print("Allocation violations:")
+# sampleset = result.lowest()
+# samples = sampleset.samples()
+# for best in samples:
+#     cont = 0
+#     varList = []
+#     for var, val in best.items():
+#         if val == 1:
+#             varList.append(var)
+#     if len(varList) != 2:
+#         print(varList)
