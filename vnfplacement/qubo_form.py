@@ -119,6 +119,7 @@ class QuboFormulation:
             for fID, vnf in sfc.vnfs.items():
                 max_cID = max(sfc.vnfs.keys())
                 if fID < max_cID:
+                    #list of all variables with specified fID and cID
                     varList = [v for v in list(bqm.variables) if self._var_to_ids(v)[1] == cID and self._var_to_ids(v)[2][0] == fID]
                     #create list of tuples (variable, bias)
                     terms = [(v, 1) for v in varList]
@@ -128,7 +129,9 @@ class QuboFormulation:
                         lagrange_multiplier = lagrange_multiplier,
                         constant = -1
                     )
-        
+    
+    def _sfc_continuity_constraint(self, bqm, netw, lagrange_multiplier):
+        pass
         
         
         # cqm = dimod.ConstrainedQuadraticModel()
@@ -172,7 +175,7 @@ class QuboFormulation:
         self._add_node_cost(bqm, netw)
         self._add_link_cost(bqm, netw)
         #self._node_res_constraint(bqm, netw)
-        self._vnf_allocation_constraint(bqm, netw, lagrangeMultiplier= 10) #to tweak
+        self._vnf_allocation_constraint(bqm, netw, lagrange_multiplier= 10) #to tweak
         
         # # self._node_res_constraint(bqm, netw)           
         print(bqm.quadratic)

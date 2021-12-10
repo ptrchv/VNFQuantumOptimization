@@ -9,8 +9,8 @@ from vnfplacement.defines import TypeVNF, NodeProperty, LinkProperty, PropertyTy
 
 # %% settings
 init_seed = 111
-graph_size = 7
-edge_prob = 0.5
+graph_size = 4
+edge_prob = 0.9
 # %%
 net = ProblemNetwork(graph_size, edge_prob, init_seed)
 net.draw()
@@ -63,14 +63,13 @@ vnf3 = VNF(TypeVNF.BUSINESS_LOGIC, req3)
 sfc = SFC("SIMPLE SFC")
 sfc.set_properties(PropertyType.DRAWBACK, {LinkProperty.DELAY : 1})
 sfc.set_properties(PropertyType.RESOURCE, {LinkProperty.BANDWIDTH: 0.5})
-sfc = sfc.append_vnf(vnf1).append_vnf(vnf2).append_vnf(vnf3)
-print(sfc)
+sfc = sfc.append_vnf(vnf1).append_vnf(vnf2).append_vnf(vnf3).append_vnf(vnf2)
 
 # sfc2
 sfc2 = SFC("SIMPLE SFC2")
 sfc2.set_properties(PropertyType.DRAWBACK, {LinkProperty.DELAY : 1})
 sfc2.set_properties(PropertyType.RESOURCE, {LinkProperty.BANDWIDTH: 0.5})
-sfc2 = sfc2.append_vnf(vnf1).append_vnf(vnf2).append_vnf(vnf3)
+sfc2 = sfc2.append_vnf(vnf1).append_vnf(vnf2).append_vnf(vnf3).append_vnf(vnf2)
 print(sfc2)
 
 # %%
@@ -134,4 +133,6 @@ for best in samples:
     print(varList)
 
 # %%
-['L_(2-3)_1_(0-1)', 'L_(3-1)_0_(0-1)', 'L_(3-1)_1_(1-2)', 'L_(3-2)_0_(1-2)']
+
+
+
