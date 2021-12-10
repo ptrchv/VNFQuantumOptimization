@@ -96,7 +96,7 @@ for e in net.links:
 #%%
 # Add sfc to network
 net = net.add_sfc(sfc)
-net = net.add_sfc(sfc2)
+net = net.add_sfc(sfc)
 
 # %%
 discretization = {
@@ -108,18 +108,20 @@ discretization = {
 }
 qf = QuboFormulation(discretization)
 qf.generate_qubo(net)
+#print(qf.qubo.variables)
 print(len(qf.qubo.variables))
 
 # %%
-solver = dimod.ExactSolver()
-result = tabu.TabuSampler().sample(qf.qubo)
+#solver = dimod.ExactSolver()
+solver = tabu.TabuSampler()
 # device = DWaveSampler()
 # solver = EmbeddingComposite(device)
-#result = solver.sample(qf.qubo)
+result = solver.sample(qf.qubo)
 print(result.lowest())
 
 
 # %%
+# print variables at "1" in each solution
 sampleset = result.lowest()
 samples = sampleset.samples()
 for best in samples:
@@ -128,11 +130,19 @@ for best in samples:
     for var, val in best.items():
         if val == 1:
             varList.append(var)
-    # if len(varList) != 1:
-    #     print(varList)
     print(varList)
+    break
 
 # %%
-
-
-
+# "allocation constraint" violation for 1 chain problem
+print("Allocation violations:")
+sampleset = result.lowest()
+samples = sampleset.samples()
+for best in samples:
+    cont = 0
+    varList = []
+    for var, val in best.items():
+        if val == 1:
+            varList.append(var)
+    if len(varList) != 6:
+        print(varList)
