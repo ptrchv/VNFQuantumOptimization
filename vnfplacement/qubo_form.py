@@ -1,4 +1,3 @@
-from os import link
 import dimod
 from vnfplacement.defines import TypeVNF, NodeProperty, LinkProperty, PropertyType
 import math
@@ -35,8 +34,8 @@ class QuboFormulation:
             # iterate on every vnf of every chain
             for sID, sfc in netw.sfcs.items():
                 for fID in sfc.vnfs.keys():
-                    sfc_len = max(sfc.vnfs.keys())
-                    if fID < sfc_len:
+                    max_cID = max(sfc.vnfs.keys())
+                    if fID < max_cID:
                         #consider link in both directions
                         bqm.add_variable(self._ids_to_var(linkID[0], linkID[1], sID, fID))
                         bqm.add_variable(self._ids_to_var(linkID[1], linkID[0], sID, fID))
@@ -92,6 +91,7 @@ class QuboFormulation:
                 resCost = link_cost[res] # exception if not present
                 bqm.add_linear(var, resQt*resCost)
     
+    #This is not finished yet
     def _node_res_constraint(self, bqm, netw):
         
         # for doing this you can use a constrained binary model
@@ -113,7 +113,21 @@ class QuboFormulation:
             #     # for
             #     # print(math.ceil(resQt/self._discretization[res]))
             #     print(nID, res)
-
+    
+    def _vnf_allocation_constraint(self, bqm, netw, lagrange_multiplier):
+        for cID, sfc in netw.sfcs.items():
+            for fID, vnf in sfc.vnfs.items():
+                max_cID = max(sfc.vnfs.keys())
+                if fID < max_cID:
+                    varList = [v for v in list(bqm.variables) if self._var_to_ids(v)[1] == cID and self._var_to_ids(v)[2][0] == fID]
+                    #create list of tuples (variable, bias)
+                    terms = [(v, 1) for v in varList]
+                    print(terms)
+                    bqm.add_linear_equality_constraint(
+                        terms,
+                        lagrange_multiplier = lagrange_multiplier,
+                        constant = -1
+                    )
         
         
         
@@ -157,15 +171,16 @@ class QuboFormulation:
         self._create_variables(bqm, netw)
         self._add_node_cost(bqm, netw)
         self._add_link_cost(bqm, netw)
-        self._node_res_constraint(bqm, netw)
+        #self._node_res_constraint(bqm, netw)
+        self._vnf_allocation_constraint(bqm, netw, lagrangeMultiplier= 10) #to tweak
         
         # # self._node_res_constraint(bqm, netw)           
-        # print(bqm)
+        print(bqm.quadratic)
         # print("")
         # print(len(bqm.variables))
         # print(bqm.variables)
 
-        # self._qubo = bqm
+        self._qubo = bqm
         
 
 

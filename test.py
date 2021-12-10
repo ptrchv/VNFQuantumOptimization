@@ -1,5 +1,6 @@
 # %%
 import dimod
+import tabu
 from vnfplacement.vnf import VNF
 from vnfplacement.sfc import SFC
 from vnfplacement.problem_network import ProblemNetwork
@@ -8,9 +9,8 @@ from vnfplacement.defines import TypeVNF, NodeProperty, LinkProperty, PropertyTy
 
 # %% settings
 init_seed = 111
-graph_size = 4
-edge_prob = 1
-
+graph_size = 7
+edge_prob = 0.5
 # %%
 net = ProblemNetwork(graph_size, edge_prob, init_seed)
 net.draw()
@@ -59,12 +59,19 @@ vnf1 = VNF(TypeVNF.FIREWALL, req1)
 vnf2 = VNF(TypeVNF.IDS, req2)
 vnf3 = VNF(TypeVNF.BUSINESS_LOGIC, req3)
 
-# sfc
+# sfc1
 sfc = SFC("SIMPLE SFC")
 sfc.set_properties(PropertyType.DRAWBACK, {LinkProperty.DELAY : 1})
 sfc.set_properties(PropertyType.RESOURCE, {LinkProperty.BANDWIDTH: 0.5})
 sfc = sfc.append_vnf(vnf1).append_vnf(vnf2).append_vnf(vnf3)
 print(sfc)
+
+# sfc2
+sfc2 = SFC("SIMPLE SFC2")
+sfc2.set_properties(PropertyType.DRAWBACK, {LinkProperty.DELAY : 1})
+sfc2.set_properties(PropertyType.RESOURCE, {LinkProperty.BANDWIDTH: 0.5})
+sfc2 = sfc2.append_vnf(vnf1).append_vnf(vnf2).append_vnf(vnf3)
+print(sfc2)
 
 # %%
 # add node resources
@@ -90,6 +97,7 @@ for e in net.links:
 #%%
 # Add sfc to network
 net = net.add_sfc(sfc)
+net = net.add_sfc(sfc2)
 
 # %%
 discretization = {
@@ -101,15 +109,29 @@ discretization = {
 }
 qf = QuboFormulation(discretization)
 qf.generate_qubo(net)
+print(len(qf.qubo.variables))
 
 # %%
-# solver = dimod.ExactSolver()
-# # device = DWaveSampler()
-# # solver = EmbeddingComposite(device)
-# result = solver.sample(qf.qubo, num_reads = 20)
-# print(result.lowest())
+solver = dimod.ExactSolver()
+result = tabu.TabuSampler().sample(qf.qubo)
+# device = DWaveSampler()
+# solver = EmbeddingComposite(device)
+#result = solver.sample(qf.qubo)
+print(result.lowest())
 
 
 # %%
+sampleset = result.lowest()
+samples = sampleset.samples()
+for best in samples:
+    cont = 0
+    varList = []
+    for var, val in best.items():
+        if val == 1:
+            varList.append(var)
+    # if len(varList) != 1:
+    #     print(varList)
+    print(varList)
 
 # %%
+['L_(2-3)_1_(0-1)', 'L_(3-1)_0_(0-1)', 'L_(3-1)_1_(1-2)', 'L_(3-2)_0_(1-2)']
