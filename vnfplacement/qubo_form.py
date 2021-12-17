@@ -12,13 +12,21 @@ class QuboFormulation:
     def qubo(self):
         return self._qubo
 
-    #extracts information from varialble name
+    # non slack variables of bqm
+    def _vars(self, bqm):
+        return [v for v in bqm.variables if v.startswith("L")]
+    
+    # slack variables of bqm
+    def _slacks(self, bqm):
+        return [v for v in bqm.variables if v.startswith("S")]    
+
+    # extracts information from varialble name
     def _var_to_ids(self, var):
         var = var.replace("(","").replace(")","")
         ids = [id for id in var.split("_")[1:]]
         linkID = (int(ids[0].split("-")[0]), int(ids[0].split("-")[1]))
         sID = int(ids[1])
-        fID = (int(ids[2].split("-")[0]), int(ids[2].split("-")[1]))     
+        fID = (int(ids[2].split("-")[0]), int(ids[2].split("-")[1]))
         return linkID, sID, fID
 
     # creates variable name
@@ -55,6 +63,12 @@ class QuboFormulation:
             var_list = [v for v in var_list if self._var_to_ids(v)[2][1] == settings["fID_end"]]
         return var_list
     
+    def _num_slack(self, value, discr_unit):
+        max_slack = value/discr_unit
+        num_slack = math.ceil(math.log(max_slack + 1, 2))
+        return num_slack
+
+    
     # create variables for formulation
     def _create_variables(self, bqm, netw):
         for linkID in netw.links().keys():
@@ -73,7 +87,7 @@ class QuboFormulation:
         return bqm
 
     def _add_node_cost(self, bqm, netw):
-        for var in bqm.variables:
+        for var in self._vars(bqm):
             # ids from varible 
             linkID, sID, fID = self._var_to_ids(var)
 
@@ -96,7 +110,7 @@ class QuboFormulation:
                     bqm.add_linear(var, resCost * resQt)
 
     def _add_link_cost(self, bqm, netw):
-        for var in bqm.variables:
+        for var in self._vars(bqm):
             # server is used if exit link is used
             linkID, sID, fID = self._var_to_ids(var)
 
@@ -116,7 +130,7 @@ class QuboFormulation:
                 max_cID = max(sfc.vnfs.keys())
                 if fID < max_cID:
                     #list of all variables with specified fID and cID
-                    var_list = [v for v in list(bqm.variables) if self._var_to_ids(v)[1] == cID and self._var_to_ids(v)[2][0] == fID]
+                    var_list = self._vars_containing(self._vars(bqm), cID = cID, fID_start = fID)
                     #create list of tuples (variable, bias)
                     terms = [(v, 1) for v in var_list]
                     bqm.add_linear_equality_constraint(
@@ -132,8 +146,8 @@ class QuboFormulation:
                 for fID in sfc.vnfs.keys():
                     #first sfc segment on first link can't be last segment
                     if fID < max(sfc.vnfs.keys()) - 1:
-                        var_list_1 = self._vars_containing(bqm.variables, end_node = nID, cID = cID, fID_start = fID)
-                        var_list_2 = self._vars_containing(bqm.variables, start_node = nID, cID = cID, fID_start = fID + 1)
+                        var_list_1 = self._vars_containing(self._vars(bqm), end_node = nID, cID = cID, fID_start = fID)
+                        var_list_2 = self._vars_containing(self._vars(bqm), start_node = nID, cID = cID, fID_start = fID + 1)
                         terms = [(v, 1) for v in var_list_1] + [(v, -1) for v in var_list_2]
                         bqm.add_linear_equality_constraint(
                             terms = terms,
@@ -143,39 +157,44 @@ class QuboFormulation:
 
     # do not exceed node resources
     #https://support.dwavesys.com/hc/en-us/community/posts/4413670491159-BQM-problem-adding-an-inequality-constraint
-    def _node_res_constraint(self, bqm, netw, discretization):
+    def _node_res_constraint(self, bqm, netw, discretization, lagrange_multiplier):
+        end_vars = []
+        for cID, sfc in netw.sfcs.items():
+            fID = max(sfc.vnfs.keys())
+            end_vars += self._vars_containing(self._vars(bqm), cID = cID, fID_end = fID)
+        
         # for all nodes
         for nID, nodeP in netw.nodes.items():
-            var_list = self._vars_containing(bqm.variables, start_node = nID)
+            var_list = self._vars_containing(self._vars(bqm), start_node = nID)
+            end_var_list = self._vars_containing(end_vars, end_node = nID)
             # for all resource types
             for res, resQt in nodeP[PropertyType.RESOURCE].items(): #TODO: test that all resources type of vnf are present on node
                 terms = []
+                # first summation
                 for v in var_list:
                     linkID, sID, fID = self._var_to_ids(v)
                     res_consumed = netw.sfcs[sID].vnfs[fID[0]].requirements[res]
                     terms.append((v,res_consumed))
-                    #print(res, resQt, res_consumed)
-                max_slack = resQt/discretization[res]
-                print(max_slack)
-                num_slack = math.ceil(math.log(max_slack + 1, 2))
-                print(num_slack)
-                slack_vars = []
-                for s in range(num_slack):
+                # second summation (last vnf of chain)
+                for v in end_var_list:
+                    linkID, sID, fID = self._var_to_ids(v)
+                    res_consumed = netw.sfcs[sID].vnfs[fID[1]].requirements[res]
+                    terms.append((v,res_consumed))
+                # slack variables
+                num_slack_vars = self._num_slack(resQt, discretization[res])
+                for s in range(num_slack_vars):
                     slack_name = f"S_NR_{s}_{nID}_{str(res)}"
-                    slack_vars.append((slack_name, round(2**s)*discretization[res]))
-                terms += slack_vars
-                print(terms)
-            break
+                    terms.append((slack_name, round(2**s)*discretization[res]))
+                # print("------------------------------")
+                # print(terms)
+                bqm.add_linear_equality_constraint(
+                            terms = terms,
+                            lagrange_multiplier = lagrange_multiplier,
+                            constant = resQt
+                        )
+                # INFO: other solution:                
+                # bqmConstraint.add_linear_inequality_constraint --> this is not present in the documentation
 
-        # end_var_list = []
-        # for cID, sfc in netw.sfcs.items():
-        #     fID = max(sfc.vnfs.keys())
-        #     var_list += self._vars_containing(bqm.variables, cID = cID, fID_end = fID)
-        #     #resurce for end vnf
-        #     break
-                
-            # bqmConstraint.add_linear_inequality_constraint --> this is not present in the documentation
-    
     def generate_qubo(self, netw):
         # create bmq instance
         bqm = dimod.BinaryQuadraticModel(dimod.BINARY)
@@ -193,11 +212,19 @@ class QuboFormulation:
         self._add_link_cost(bqm, netw)
 
         # cost constraints
-        self._node_res_constraint(bqm, netw, self._discretization)
+        self._node_res_constraint(bqm, netw, self._discretization, lagrange_multiplier=10)
 
         # structure constraints
-        #self._vnf_allocation_constraint(bqm, netw, lagrange_multiplier = 10) #to tweak
-        #self._sfc_continuity_constraint(bqm, netw, lagrange_multiplier = 10)       
+        self._vnf_allocation_constraint(bqm, netw, lagrange_multiplier = 10) # multiplier to tweak
+        self._sfc_continuity_constraint(bqm, netw, lagrange_multiplier = 10) # multiplier to tweak
+
+        # print(bqm.variables)
+        # print("---------------")
+        # print(self._vars(bqm))
+        # print("---------------")
+        # print(self._slacks(bqm))
+
+        # print(sorted(list(bqm.variables)) == sorted(list(self._vars(bqm))))
 
         self._qubo = bqm
         

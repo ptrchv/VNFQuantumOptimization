@@ -96,6 +96,7 @@ for e in net.links:
 #%%
 # Add sfc to network
 net = net.add_sfc(sfc)
+#net = net.add_sfc(sfc2)
 #net = net.add_sfc(sfc)
 
 # %%
