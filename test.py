@@ -50,9 +50,9 @@ net.draw()
 
 #%% TEST VNF and SFC classes
 #requirements
-req1 = {NodeProperty.MEMORY : 1}
-req2 = {NodeProperty.MEMORY : 2}
-req3 = {NodeProperty.MEMORY : 3}
+req1 = {NodeProperty.MEMORY : 1, NodeProperty.CPU : 1}
+req2 = {NodeProperty.MEMORY : 2, NodeProperty.CPU : 1}
+req3 = {NodeProperty.MEMORY : 3, NodeProperty.CPU : 1}
 
 # vnf
 vnf1 = VNF(TypeVNF.FIREWALL, req1)
@@ -74,8 +74,8 @@ print(sfc2)
 
 # %%
 # add node resources
-node_res = {NodeProperty.MEMORY : 3}
-node_costs = {NodeProperty.MEMORY : 1}
+node_res = {NodeProperty.MEMORY : 3, NodeProperty.CPU : 3}
+node_costs = {NodeProperty.MEMORY : 1, NodeProperty.CPU : 1}
 for n in list(net.nodes):
     net.set_node_properties(n, PropertyType.RESOURCE, node_res)
     net.set_node_properties(n, PropertyType.COST, node_costs)
@@ -103,7 +103,7 @@ discretization = {
     LinkProperty.BANDWIDTH : 0.2,
     LinkProperty.DELAY : 0.1,
     NodeProperty.CPU : 1,
-    NodeProperty.MEMORY : 1,
+    NodeProperty.MEMORY : 2,
     NodeProperty.STORAGE : 128
 }
 qf = QuboFormulation(discretization)
@@ -111,9 +111,9 @@ qf.generate_qubo(net)
 #print(qf.qubo.variables)
 print("Number of variables:",len(qf.qubo.variables))
 
-# %%
-# #solver = dimod.ExactSolver()
-# solver = tabu.TabuSampler()
+# # %%
+# solver = dimod.ExactSolver()
+# #solver = tabu.TabuSampler()
 # # device = DWaveSampler()
 # # solver = EmbeddingComposite(device)
 # result = solver.sample(qf.qubo)
@@ -121,7 +121,7 @@ print("Number of variables:",len(qf.qubo.variables))
 
 
 # %%
-# print variables at "1" in each solution
+# #print variables at "1" in each solution
 # sampleset = result.lowest()
 # samples = sampleset.samples()
 # for best in samples:
@@ -131,7 +131,7 @@ print("Number of variables:",len(qf.qubo.variables))
 #         if val == 1:
 #             varList.append(var)
 #     print(varList)
-#     break
+    
 
 # %%
 # "allocation constraint" violation for 1 chain problem
@@ -146,3 +146,4 @@ print("Number of variables:",len(qf.qubo.variables))
 #             varList.append(var)
 #     if len(varList) != 2:
 #         print(varList)
+# %%

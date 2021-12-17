@@ -148,28 +148,31 @@ class QuboFormulation:
         for nID, nodeP in netw.nodes.items():
             var_list = self._vars_containing(bqm.variables, start_node = nID)
             # for all resource types
-            for res, resQt in nodeP[PropertyType.RESOURCE].items():
+            for res, resQt in nodeP[PropertyType.RESOURCE].items(): #TODO: test that all resources type of vnf are present on node
                 terms = []
                 for v in var_list:
                     linkID, sID, fID = self._var_to_ids(v)
                     res_consumed = netw.sfcs[sID].vnfs[fID[0]].requirements[res]
                     terms.append((v,res_consumed))
                     #print(res, resQt, res_consumed)
-                max_slack =math.ceil(resQt/discretization[res])
+                max_slack = resQt/discretization[res]
                 print(max_slack)
                 num_slack = math.ceil(math.log(max_slack, 2)) + 1
-                print(num_slack)
+                slack_vars = []
+                for s in range(num_slack):
+                    slack_name = f"S_NR_{s}_{nID}_{str(res)}"
+                    slack_vars.append((slack_name, round(2**s)*discretization[res]))
+                terms += slack_vars
+                print(terms)
 
-                
-                #print(discretization[res])
+        end_var_list = []
+        for cID, sfc in netw.sfcs.items():
+            fID = max(sfc.vnfs.keys())
+            var_list += self._vars_containing(bqm.variables, cID = cID, fID_end = fID)
+            #resurce for end vnf
             break
                 
-                    # bqmConstraint.add_linear_inequality_constraint --> this is not present in the documentation
-                    
-            
-            #     # for
-            #     # print(math.ceil(resQt/self._discretization[res]))
-            #     print(nID, res)
+            # bqmConstraint.add_linear_inequality_constraint --> this is not present in the documentation
     
     def generate_qubo(self, netw):
         # create bmq instance
