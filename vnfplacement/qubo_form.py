@@ -67,7 +67,6 @@ class QuboFormulation:
         max_slack = value/discr_unit
         num_slack = math.ceil(math.log(max_slack + 1, 2))
         return num_slack
-
     
     # create variables for formulation
     def _create_variables(self, bqm, netw):
@@ -112,7 +111,7 @@ class QuboFormulation:
     def _add_link_cost(self, bqm, netw):
         for var in self._vars(bqm):
             # server is used if exit link is used
-            linkID, sID, fID = self._var_to_ids(var)
+            linkID, sID, _ = self._var_to_ids(var)
 
             # get sfc resources and link costs
             sfc_res = netw.sfcs[sID].get_properties(PropertyType.RESOURCE)
@@ -157,12 +156,11 @@ class QuboFormulation:
 
     # do not exceed node resources
     #https://support.dwavesys.com/hc/en-us/community/posts/4413670491159-BQM-problem-adding-an-inequality-constraint
-    def _node_res_constraint(self, bqm, netw, discretization, lagrange_multiplier):
+    def _node_res_constraints(self, bqm, netw, discretization, lagrange_multiplier):
         end_vars = []
         for cID, sfc in netw.sfcs.items():
             fID = max(sfc.vnfs.keys())
-            end_vars += self._vars_containing(self._vars(bqm), cID = cID, fID_end = fID)
-        
+            end_vars += self._vars_containing(self._vars(bqm), cID = cID, fID_end = fID)        
         # for all nodes
         for nID, nodeP in netw.nodes.items():
             var_list = self._vars_containing(self._vars(bqm), start_node = nID)
@@ -172,12 +170,12 @@ class QuboFormulation:
                 terms = []
                 # first summation
                 for v in var_list:
-                    linkID, sID, fID = self._var_to_ids(v)
+                    _, sID, fID = self._var_to_ids(v)
                     res_consumed = netw.sfcs[sID].vnfs[fID[0]].requirements[res]
                     terms.append((v,res_consumed))
                 # second summation (last vnf of chain)
                 for v in end_var_list:
-                    linkID, sID, fID = self._var_to_ids(v)
+                    _, sID, fID = self._var_to_ids(v)
                     res_consumed = netw.sfcs[sID].vnfs[fID[1]].requirements[res]
                     terms.append((v,res_consumed))
                 # slack variables
@@ -194,6 +192,38 @@ class QuboFormulation:
                         )
                 # INFO: other solution:                
                 # bqmConstraint.add_linear_inequality_constraint --> this is not present in the documentation
+
+    def _link_res_constraints(self, bqm, netw, discretization, lagrange_multiplier):
+        # for all links
+        for linkID, linkP in netw.links().items():
+            # vars of link in both directions
+            var_list = self._vars_containing(self._vars(bqm), start_node = linkID[0], end_node = linkID[1])
+            var_list += self._vars_containing(self._vars(bqm), start_node = linkID[1], end_node = linkID[0])
+
+            # for all resource types
+            for res, resQt in linkP[PropertyType.RESOURCE].items():
+                terms = []
+                for v in var_list:
+                    _, sID, _ = self._var_to_ids(v)
+                    res_consumed = netw.sfcs[sID].get_properties(PropertyType.RESOURCE)[res]
+                    terms.append((v,res_consumed))
+
+            # slack variables
+            num_slack_vars = self._num_slack(resQt, discretization[res])
+            for s in range(num_slack_vars):
+                slack_name = f"S_LR_{s}_({linkID[0]}-{linkID[1]})_{str(res)}"
+                terms.append((slack_name, round(2**s)*discretization[res]))
+            # print("------------------------------")
+            # print(terms)
+
+            bqm.add_linear_equality_constraint(
+                        terms = terms,
+                        lagrange_multiplier = lagrange_multiplier,
+                        constant = resQt
+                    )
+
+
+        
 
     def generate_qubo(self, netw):
         # create bmq instance
@@ -212,7 +242,8 @@ class QuboFormulation:
         self._add_link_cost(bqm, netw)
 
         # cost constraints
-        self._node_res_constraint(bqm, netw, self._discretization, lagrange_multiplier=10)
+        self._node_res_constraints(bqm, netw, self._discretization, lagrange_multiplier=10)
+        self._link_res_constraints(bqm, netw, self._discretization, lagrange_multiplier=10)
 
         # structure constraints
         self._vnf_allocation_constraint(bqm, netw, lagrange_multiplier = 10) # multiplier to tweak
