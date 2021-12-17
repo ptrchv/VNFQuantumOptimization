@@ -61,16 +61,16 @@ vnf3 = VNF(TypeVNF.BUSINESS_LOGIC, req3)
 
 # sfc1
 sfc = SFC("SIMPLE SFC")
-sfc.set_properties(PropertyType.DRAWBACK, {LinkProperty.DELAY : 1})
+sfc.set_properties(PropertyType.DRAWBACK, {LinkProperty.DELAY : 0.6})
 sfc.set_properties(PropertyType.RESOURCE, {LinkProperty.BANDWIDTH: 0.5})
 sfc = sfc.append_vnf(vnf1).append_vnf(vnf2).append_vnf(vnf3)#.append_vnf(vnf2)
 
 # sfc2
 sfc2 = SFC("SIMPLE SFC2")
-sfc2.set_properties(PropertyType.DRAWBACK, {LinkProperty.DELAY : 1})
+sfc2.set_properties(PropertyType.DRAWBACK, {LinkProperty.DELAY : 0.8})
 sfc2.set_properties(PropertyType.RESOURCE, {LinkProperty.BANDWIDTH: 0.5})
 sfc2 = sfc2.append_vnf(vnf1).append_vnf(vnf2).append_vnf(vnf3).append_vnf(vnf2)
-print(sfc2)
+#print(sfc2)
 
 # %%
 # add node resources
@@ -84,7 +84,7 @@ for n in list(net.nodes):
 for e in net.links:
     net.set_link_properties(e, PropertyType.RESOURCE, {LinkProperty.BANDWIDTH : 1})
     net.set_link_properties(e, PropertyType.COST, {LinkProperty.BANDWIDTH : 1})
-    net.set_link_properties(e, PropertyType.DRAWBACK, {LinkProperty.DELAY : 0.1})
+    net.set_link_properties(e, PropertyType.DRAWBACK, {LinkProperty.DELAY : 0.2})
 
 #%%
 #print nodes and links
@@ -96,13 +96,13 @@ for e in net.links:
 #%%
 # Add sfc to network
 net = net.add_sfc(sfc)
-#net = net.add_sfc(sfc2)
+net = net.add_sfc(sfc2)
 #net = net.add_sfc(sfc)
 
 # %%
 discretization = {
     LinkProperty.BANDWIDTH : 0.2,
-    LinkProperty.DELAY : 0.1,
+    LinkProperty.DELAY : 0.2,
     NodeProperty.CPU : 1,
     NodeProperty.MEMORY : 2,
     NodeProperty.STORAGE : 128

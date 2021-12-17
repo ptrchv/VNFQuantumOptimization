@@ -1,3 +1,4 @@
+from types import new_class
 import dimod
 from vnfplacement.defines import TypeVNF, NodeProperty, LinkProperty, PropertyType
 import math
@@ -188,7 +189,7 @@ class QuboFormulation:
                 bqm.add_linear_equality_constraint(
                             terms = terms,
                             lagrange_multiplier = lagrange_multiplier,
-                            constant = resQt
+                            constant = -resQt
                         )
                 # INFO: other solution:                
                 # bqmConstraint.add_linear_inequality_constraint --> this is not present in the documentation
@@ -215,15 +216,39 @@ class QuboFormulation:
                 terms.append((slack_name, round(2**s)*discretization[res]))
             # print("------------------------------")
             # print(terms)
-
             bqm.add_linear_equality_constraint(
                         terms = terms,
                         lagrange_multiplier = lagrange_multiplier,
-                        constant = resQt
+                        constant = -resQt
                     )
 
+    def _link_drawback_constraints(self, bqm, netw, discretization, lagrange_multiplier):
+        # for each sfc
+        for cID, sfc in netw.sfcs.items():
+            var_list = self._vars_containing(self._vars(bqm), cID = cID)
 
-        
+            # for all resource types
+            for d_type, d_max in sfc.get_properties(PropertyType.DRAWBACK).items():
+                print(d_type, d_max)              
+                terms = []
+                for v in var_list:
+                    linkID, _, _ = self._var_to_ids(v)
+                    d_val = netw.links[linkID][PropertyType.DRAWBACK][d_type]
+                    #print(d_val)
+                    terms.append((v, d_val))
+
+                # slack variables
+                num_slack_vars = self._num_slack(d_max, discretization[d_type])
+                for s in range(num_slack_vars):
+                    slack_name = f"S_LD_{s}_{cID}"
+                    terms.append((slack_name, round(2**s)*discretization[d_type]))
+                print("------------------------------")
+                print(terms)
+                bqm.add_linear_equality_constraint(
+                            terms = terms,
+                            lagrange_multiplier = lagrange_multiplier,
+                            constant = -d_max
+                        )        
 
     def generate_qubo(self, netw):
         # create bmq instance
@@ -242,17 +267,20 @@ class QuboFormulation:
         self._add_link_cost(bqm, netw)
 
         # cost constraints
-        self._node_res_constraints(bqm, netw, self._discretization, lagrange_multiplier=10)
-        self._link_res_constraints(bqm, netw, self._discretization, lagrange_multiplier=10)
+        #self._node_res_constraints(bqm, netw, self._discretization, lagrange_multiplier=10)
+        #self._link_res_constraints(bqm, netw, self._discretization, lagrange_multiplier=10)
+        self._link_drawback_constraints(bqm, netw, self._discretization, lagrange_multiplier=10)
 
         # structure constraints
-        self._vnf_allocation_constraint(bqm, netw, lagrange_multiplier = 10) # multiplier to tweak
-        self._sfc_continuity_constraint(bqm, netw, lagrange_multiplier = 10) # multiplier to tweak
+        #self._vnf_allocation_constraint(bqm, netw, lagrange_multiplier = 10) # multiplier to tweak
+        #self._sfc_continuity_constraint(bqm, netw, lagrange_multiplier = 10) # multiplier to tweak
 
-        # print(bqm.variables)
+        #print(bqm.variables)
         # print("---------------")
+        # print(len(self._vars(bqm)))
         # print(self._vars(bqm))
         # print("---------------")
+        # print(len(self._slacks(bqm)))
         # print(self._slacks(bqm))
 
         # print(sorted(list(bqm.variables)) == sorted(list(self._vars(bqm))))
