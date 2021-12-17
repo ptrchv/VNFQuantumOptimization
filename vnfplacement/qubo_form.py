@@ -157,20 +157,22 @@ class QuboFormulation:
                     #print(res, resQt, res_consumed)
                 max_slack = resQt/discretization[res]
                 print(max_slack)
-                num_slack = math.ceil(math.log(max_slack, 2)) + 1
+                num_slack = math.ceil(math.log(max_slack + 1, 2))
+                print(num_slack)
                 slack_vars = []
                 for s in range(num_slack):
                     slack_name = f"S_NR_{s}_{nID}_{str(res)}"
                     slack_vars.append((slack_name, round(2**s)*discretization[res]))
                 terms += slack_vars
                 print(terms)
-
-        end_var_list = []
-        for cID, sfc in netw.sfcs.items():
-            fID = max(sfc.vnfs.keys())
-            var_list += self._vars_containing(bqm.variables, cID = cID, fID_end = fID)
-            #resurce for end vnf
             break
+
+        # end_var_list = []
+        # for cID, sfc in netw.sfcs.items():
+        #     fID = max(sfc.vnfs.keys())
+        #     var_list += self._vars_containing(bqm.variables, cID = cID, fID_end = fID)
+        #     #resurce for end vnf
+        #     break
                 
             # bqmConstraint.add_linear_inequality_constraint --> this is not present in the documentation
     
