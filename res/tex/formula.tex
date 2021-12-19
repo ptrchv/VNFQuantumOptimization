@@ -1,0 +1,34 @@
+%cost_function
+$$
+cost = 
+    \sum_{i,j\neq i,p,q \neq q_L,w} {L^{ij}_{pq} \cdot R^{w}_{pq} \cdot(C_{i}+C_{j} \cdot \delta_{sel}(q))} + 
+    \sum_{i,j \neq i,p,q \neq q_L,w} L^{ij}_{pq} \cdot B_p \cdot  C_{ij}
+$$
+
+%node_resources
+$$
+\forall i,w 
+    \sum_{j \neq i,p,q \neq q_L} L^{ij}_{pq} \cdot R^{w}_{pq} +
+    \sum_{j \neq i,p} L^{ji}_{pq_{L-1}} \cdot R^{w}_{pq_L}
+    \leq R^{w}_i
+$$
+
+%bandwidth
+$$
+    \forall i, j < i \sum_{p,q \neq q_{L}} (L^{ij}_{pq} + L^{ji}_{pq}) \cdot B_p \leq B_{ij}
+$$
+
+%delay
+$$
+    \forall{p} \sum_{i,j \neq i,q \neq q_L} L^{ij}_{pq} \cdot D_{ij} \leq D_p 
+$$
+
+%allocation
+$$
+    \forall{p,q \neq q_L} \sum_{i,j \neq i}  L^{ij}_{pq} = 1
+$$
+
+%continuity
+$$
+    \forall{j,p,q \neq q_L} \sum_{i \neq j} L^{ij}_{pq} - \sum_{k \neq j} L^{jk}_{p(q+1)} = 0
+$$
