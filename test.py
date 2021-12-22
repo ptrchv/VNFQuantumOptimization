@@ -18,8 +18,8 @@ from dwave.system.composites import EmbeddingComposite
 
 # %% settings
 init_seed = 111
-graph_size = 4
-edge_prob = 0.7
+graph_size = 5
+edge_prob = 0.8
 # %%
 net = ProblemNetwork(graph_size, edge_prob, init_seed)
 net.draw()
@@ -59,9 +59,9 @@ net.draw()
 
 #%% TEST VNF and SFC classes
 #requirements
-req1 = {NodeProperty.MEMORY : 2}
-req2 = {NodeProperty.MEMORY : 2}
-req3 = {NodeProperty.MEMORY : 2}
+req1 = {NodeProperty.MEMORY : 1}
+req2 = {NodeProperty.MEMORY : 1}
+req3 = {NodeProperty.MEMORY : 1}
 
 # vnf
 vnf1 = VNF(TypeVNF.FIREWALL, req1)
@@ -83,44 +83,44 @@ sfc2 = sfc2.append_vnf(vnf1).append_vnf(vnf2).append_vnf(vnf3).append_vnf(vnf2)
 
 # %%
 # add node resources
-node_res = {NodeProperty.MEMORY : 3}
+node_res = {NodeProperty.MEMORY : 5}
 node_costs = {NodeProperty.MEMORY : 1}
-# for n in list(net.nodes):
-#     net.set_node_properties(n, PropertyType.RESOURCE, node_res)
-#     net.set_node_properties(n, PropertyType.COST, node_costs)
+for n in list(net.nodes):
+    net.set_node_properties(n, PropertyType.RESOURCE, node_res)
+    net.set_node_properties(n, PropertyType.COST, node_costs)
 
 ## Manual node test #########
-node_res3 = {NodeProperty.MEMORY : 4}
-node_res1 = {NodeProperty.MEMORY : 1}
-net.set_node_properties(0, PropertyType.RESOURCE, node_res3)
-net.set_node_properties(0, PropertyType.COST, node_costs)
-net.set_node_properties(1, PropertyType.RESOURCE, node_res1)
-net.set_node_properties(1, PropertyType.COST, node_costs)
-net.set_node_properties(2, PropertyType.RESOURCE, node_res3)
-net.set_node_properties(2, PropertyType.COST, node_costs)
-net.set_node_properties(3, PropertyType.RESOURCE, node_res3)
-net.set_node_properties(3, PropertyType.COST, node_costs)
+# node_res3 = {NodeProperty.MEMORY : 4}
+# node_res1 = {NodeProperty.MEMORY : 1}
+# net.set_node_properties(0, PropertyType.RESOURCE, node_res3)
+# net.set_node_properties(0, PropertyType.COST, node_costs)
+# net.set_node_properties(1, PropertyType.RESOURCE, node_res1)
+# net.set_node_properties(1, PropertyType.COST, node_costs)
+# net.set_node_properties(2, PropertyType.RESOURCE, node_res3)
+# net.set_node_properties(2, PropertyType.COST, node_costs)
+# net.set_node_properties(3, PropertyType.RESOURCE, node_res3)
+# net.set_node_properties(3, PropertyType.COST, node_costs)
 ######################
 
 ## Manual link test #########
-net.set_link_properties((0,2), PropertyType.RESOURCE, {LinkProperty.BANDWIDTH : 1})
-net.set_link_properties((0,2), PropertyType.COST, {LinkProperty.BANDWIDTH : 1})
-net.set_link_properties((0,2), PropertyType.DRAWBACK, {LinkProperty.DELAY : 0.6})
+# net.set_link_properties((0,2), PropertyType.RESOURCE, {LinkProperty.BANDWIDTH : 1})
+# net.set_link_properties((0,2), PropertyType.COST, {LinkProperty.BANDWIDTH : 1})
+# net.set_link_properties((0,2), PropertyType.DRAWBACK, {LinkProperty.DELAY : 0.6})
 
-net.set_link_properties((1,2), PropertyType.RESOURCE, {LinkProperty.BANDWIDTH : 1})
-net.set_link_properties((1,2), PropertyType.COST, {LinkProperty.BANDWIDTH : 1})
-net.set_link_properties((1,2), PropertyType.DRAWBACK, {LinkProperty.DELAY : 0.4})
+# net.set_link_properties((1,2), PropertyType.RESOURCE, {LinkProperty.BANDWIDTH : 1})
+# net.set_link_properties((1,2), PropertyType.COST, {LinkProperty.BANDWIDTH : 1})
+# net.set_link_properties((1,2), PropertyType.DRAWBACK, {LinkProperty.DELAY : 0.4})
 
-net.set_link_properties((2,3), PropertyType.RESOURCE, {LinkProperty.BANDWIDTH : 1})
-net.set_link_properties((2,3), PropertyType.COST, {LinkProperty.BANDWIDTH : 1})
-net.set_link_properties((2,3), PropertyType.DRAWBACK, {LinkProperty.DELAY : 0.4})
+# net.set_link_properties((2,3), PropertyType.RESOURCE, {LinkProperty.BANDWIDTH : 1})
+# net.set_link_properties((2,3), PropertyType.COST, {LinkProperty.BANDWIDTH : 1})
+# net.set_link_properties((2,3), PropertyType.DRAWBACK, {LinkProperty.DELAY : 0.4})
 #############################
 
 # add link resources
-# for e in net.links:
-#     net.set_link_properties(e, PropertyType.RESOURCE, {LinkProperty.BANDWIDTH : 1})
-#     net.set_link_properties(e, PropertyType.COST, {LinkProperty.BANDWIDTH : 1})
-#     net.set_link_properties(e, PropertyType.DRAWBACK, {LinkProperty.DELAY : 0.2})
+for e in net.links:
+    net.set_link_properties(e, PropertyType.RESOURCE, {LinkProperty.BANDWIDTH : 1})
+    net.set_link_properties(e, PropertyType.COST, {LinkProperty.BANDWIDTH : 1})
+    net.set_link_properties(e, PropertyType.DRAWBACK, {LinkProperty.DELAY : 0.2})
 
 #%%
 #print nodes and links
@@ -191,7 +191,7 @@ print(client.get_solvers())
 device = DWaveSampler(token = config.api_token)
 print(device)
 solver = EmbeddingComposite(device)
-sampleset = solver.sample(qf.qubo, num_reads = 20)
+sampleset = solver.sample(qf.qubo, num_reads = 100)
 print(sampleset)
 #sampleset = dimod.ExactSolver().sample(qf.qubo)
 samples = sampleset.samples()
@@ -203,8 +203,8 @@ for best, energy in sampleset.data(fields=['sample','energy'], sorted_by='energy
     chosen_node = []
     for var, val in best.items():
         if val == 1:
-            varList.append(var)
-            if not qf.is_slack(var):            
+            if not qf.is_slack(var):   
+                varList.append(var)  
                 nodei = qf._var_to_ids(var)[0][0]
                 nodef = qf._var_to_ids(var)[0][1]
                 chosen_node.append(nodei)

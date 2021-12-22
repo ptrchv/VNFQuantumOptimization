@@ -271,13 +271,13 @@ class QuboFormulation:
         self._add_link_cost(bqm, netw)
 
         # cost constraints
-        # self._node_res_constraints(bqm, netw, self._discretization, lagrange_multiplier=10)
-        # self._link_res_constraints(bqm, netw, self._discretization, lagrange_multiplier=10)
-        self._link_drawback_constraints(bqm, netw, self._discretization, lagrange_multiplier=10)
+        self._node_res_constraints(bqm, netw, self._discretization, lagrange_multiplier=1)
+        #self._link_res_constraints(bqm, netw, self._discretization, lagrange_multiplier=1)
+        #self._link_drawback_constraints(bqm, netw, self._discretization, lagrange_multiplier=1)
 
         # structure constraints
-        self._vnf_allocation_constraint(bqm, netw, lagrange_multiplier = 10) # multiplier to tweak
-        self._sfc_continuity_constraint(bqm, netw, lagrange_multiplier = 10) # multiplier to tweak
+        self._vnf_allocation_constraint(bqm, netw, lagrange_multiplier = 5) # multiplier to tweak
+        self._sfc_continuity_constraint(bqm, netw, lagrange_multiplier = 5) # multiplier to tweak
 
         #print(bqm.variables)
         # print("---------------")
