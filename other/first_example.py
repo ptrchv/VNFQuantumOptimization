@@ -17,8 +17,8 @@ import config
 import networkx as nx
 
 # %%
-# client = Client.from_config(token=config.api_token)
-# print(client.get_solvers())
+client = Client.from_config(token=config.api_token)
+print(client.get_solvers())
 
 # %%
 # Create empty graph
@@ -81,9 +81,9 @@ print(bqm.to_qubo())
 
 # %%
 # find solution
-solver = dimod.ExactSolver()
-# device = DWaveSampler()
-# solver = EmbeddingComposite(device)
+# solver = dimod.ExactSolver()
+device = DWaveSampler(token = config.api_token)
+solver = EmbeddingComposite(device)
 result = solver.sample(bqm, num_reads = 20)
 result
 

@@ -1,5 +1,6 @@
 # %%
 import dimod
+from dimod import sampleset
 import tabu
 from vnfplacement.vnf import VNF
 from vnfplacement.sfc import SFC
@@ -186,31 +187,35 @@ print("Number of variables:",len(qf.qubo.variables))
 # samples = sampleset.samples()
 
 client = Client.from_config(token=config.api_token)
-device = DWaveSampler()
+print(client.get_solvers())
+device = DWaveSampler(token = config.api_token)
 print(device)
 solver = EmbeddingComposite(device)
-# result = solver.sample(qf.qubo, num_reads = 20)
+sampleset = solver.sample(qf.qubo, num_reads = 20)
+print(sampleset)
+#sampleset = dimod.ExactSolver().sample(qf.qubo)
 samples = sampleset.samples()
-
-for best in samples:
+#%%
+for best, energy in sampleset.data(fields=['sample','energy'], sorted_by='energy'):
     cont = 0
     varList = []
     color_map = []
     chosen_node = []
     for var, val in best.items():
-        if val == 1 and not qf.is_slack(var):
+        if val == 1:
             varList.append(var)
-            nodei = qf._var_to_ids(var)[0][0]
-            nodef = qf._var_to_ids(var)[0][1]
-            chosen_node.append(nodei)
-            chosen_node.append(nodef)
+            if not qf.is_slack(var):            
+                nodei = qf._var_to_ids(var)[0][0]
+                nodef = qf._var_to_ids(var)[0][1]
+                chosen_node.append(nodei)
+                chosen_node.append(nodef)
     for node in net.nodes:
         if node in chosen_node:
             color_map.append('red')
         else: 
             color_map.append('cyan')
     fig, ax = plt.subplots(1,1)
-    ax.text(-1, -1, str(varList), fontsize=10)
+    ax.text(-1, -1, str(varList) + str(energy), fontsize=10)
     nx.draw(net._pnet, node_color=color_map, with_labels=True, ax = ax)    
         
     
