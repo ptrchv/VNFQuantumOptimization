@@ -14,12 +14,12 @@ class QuboFormulation:
         return self._qubo
 
     # non slack variables of bqm
-    def _vars(self, bqm):
-        return [v for v in bqm.variables if v.startswith("L")]
+    def _vars(self, variables):
+        return [v for v in variables if v.startswith("L")]
     
     # slack variables of bqm
-    def _slacks(self, bqm):
-        return [v for v in bqm.variables if v.startswith("S")]    
+    def _slacks(self, variables):
+        return [v for v in variables if v.startswith("S")]    
 
     # extracts information from varialble name
     def _var_to_ids(self, var):
@@ -87,7 +87,7 @@ class QuboFormulation:
         return bqm
 
     def _add_node_cost(self, bqm, netw):
-        for var in self._vars(bqm):
+        for var in self._vars(bqm.variables):
             # ids from varible 
             linkID, sID, fID = self._var_to_ids(var)
 
@@ -110,7 +110,7 @@ class QuboFormulation:
                     bqm.add_linear(var, resCost * resQt)
 
     def _add_link_cost(self, bqm, netw):
-        for var in self._vars(bqm):
+        for var in self._vars(bqm.variables):
             # server is used if exit link is used
             linkID, sID, _ = self._var_to_ids(var)
 
@@ -130,7 +130,7 @@ class QuboFormulation:
                 max_cID = max(sfc.vnfs.keys())
                 if fID < max_cID:
                     #list of all variables with specified fID and cID
-                    var_list = self._vars_containing(self._vars(bqm), cID = cID, fID_start = fID)
+                    var_list = self._vars_containing(self._vars(bqm.variables), cID = cID, fID_start = fID)
                     #create list of tuples (variable, bias)
                     terms = [(v, 1) for v in var_list]
                     bqm.add_linear_equality_constraint(
@@ -146,8 +146,8 @@ class QuboFormulation:
                 for fID in sfc.vnfs.keys():
                     #first sfc segment on first link can't be last segment
                     if fID < max(sfc.vnfs.keys()) - 1:
-                        var_list_1 = self._vars_containing(self._vars(bqm), end_node = nID, cID = cID, fID_start = fID)
-                        var_list_2 = self._vars_containing(self._vars(bqm), start_node = nID, cID = cID, fID_start = fID + 1)
+                        var_list_1 = self._vars_containing(self._vars(bqm.variables), end_node = nID, cID = cID, fID_start = fID)
+                        var_list_2 = self._vars_containing(self._vars(bqm.variables), start_node = nID, cID = cID, fID_start = fID + 1)
                         terms = [(v, 1) for v in var_list_1] + [(v, -1) for v in var_list_2]
                         bqm.add_linear_equality_constraint(
                             terms = terms,
@@ -161,20 +161,20 @@ class QuboFormulation:
         end_vars = []
         for cID, sfc in netw.sfcs.items():
             fID = max(sfc.vnfs.keys())
-            end_vars += self._vars_containing(self._vars(bqm), cID = cID, fID_end = fID)        
+            end_vars += self._vars_containing(self._vars(bqm.variables), cID = cID, fID_end = fID)        
         # for all nodes
         for nID, nodeP in netw.nodes.items():
-            var_list = self._vars_containing(self._vars(bqm), start_node = nID)
+            var_list = self._vars_containing(self._vars(bqm.variables), start_node = nID)
             end_var_list = self._vars_containing(end_vars, end_node = nID)
             # for all resource types
             for res, resQt in nodeP[PropertyType.RESOURCE].items(): #TODO: test that all resources type of vnf are present on node
                 terms = []
-                # first summation
+                # first summation (where i is the initial node)
                 for v in var_list:
                     _, sID, fID = self._var_to_ids(v)
                     res_consumed = netw.sfcs[sID].vnfs[fID[0]].requirements[res]
                     terms.append((v,res_consumed))
-                # second summation (last vnf of chain)
+                # second summation (last vnf of chain - where i is the final node)
                 for v in end_var_list:
                     _, sID, fID = self._var_to_ids(v)
                     res_consumed = netw.sfcs[sID].vnfs[fID[1]].requirements[res]
@@ -198,8 +198,8 @@ class QuboFormulation:
         # for all links
         for linkID, linkP in netw.links().items():
             # vars of link in both directions
-            var_list = self._vars_containing(self._vars(bqm), start_node = linkID[0], end_node = linkID[1])
-            var_list += self._vars_containing(self._vars(bqm), start_node = linkID[1], end_node = linkID[0])
+            var_list = self._vars_containing(self._vars(bqm.variables), start_node = linkID[0], end_node = linkID[1])
+            var_list += self._vars_containing(self._vars(bqm.variables), start_node = linkID[1], end_node = linkID[0])
 
             # for all resource types
             for res, resQt in linkP[PropertyType.RESOURCE].items():
@@ -225,7 +225,7 @@ class QuboFormulation:
     def _link_drawback_constraints(self, bqm, netw, discretization, lagrange_multiplier):
         # for each sfc
         for cID, sfc in netw.sfcs.items():
-            var_list = self._vars_containing(self._vars(bqm), cID = cID)
+            var_list = self._vars_containing(self._vars(bqm.variables), cID = cID)
 
             # for all resource types
             for d_type, d_max in sfc.get_properties(PropertyType.DRAWBACK).items():
@@ -268,8 +268,8 @@ class QuboFormulation:
 
         # cost constraints
         self._node_res_constraints(bqm, netw, self._discretization, lagrange_multiplier=10)
-        self._link_res_constraints(bqm, netw, self._discretization, lagrange_multiplier=10)
-        self._link_drawback_constraints(bqm, netw, self._discretization, lagrange_multiplier=10)
+        # self._link_res_constraints(bqm, netw, self._discretization, lagrange_multiplier=10)
+        # self._link_drawback_constraints(bqm, netw, self._discretization, lagrange_multiplier=10)
 
         # structure constraints
         self._vnf_allocation_constraint(bqm, netw, lagrange_multiplier = 10) # multiplier to tweak
@@ -277,12 +277,12 @@ class QuboFormulation:
 
         #print(bqm.variables)
         # print("---------------")
-        # print(len(self._vars(bqm)))
-        # print(self._vars(bqm))
+        # print(len(self._vars(bqm.variables)))
+        # print(self._vars(bqm.variables))
         # print("---------------")
-        # print(len(self._slacks(bqm)))
-        # print(self._slacks(bqm))
+        # print(len(self._slacks(bqm.variables)))
+        # print(self._slacks(bqm.variables))
 
-        # print(sorted(list(bqm.variables)) == sorted(list(self._vars(bqm))))
+        # print(sorted(list(bqm.variables)) == sorted(list(self._vars(bqm.variables))))
 
         self._qubo = bqm
