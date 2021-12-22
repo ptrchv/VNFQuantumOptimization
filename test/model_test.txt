@@ -1,3 +1,5 @@
+------------------- EXACT SOLVER ------------------------
+
 - node res constraint (exact solver):
     pre)
         - 4 nodes graph (star, 3 links)
@@ -24,3 +26,7 @@
     1) all links offer low delay -> sol with allocation anywhere
     2) one link with more delay than chain -> sol where link in not used
     3) one link in combination with any of the others more delay that chain -> sol where link is not used
+
+------------------- DWAVE SOLVER ------------------------
+test with node resource constraints shows that slack variables do not adapt to the solution,
+and still provide penalty
