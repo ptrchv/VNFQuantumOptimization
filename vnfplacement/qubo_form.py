@@ -19,7 +19,11 @@ class QuboFormulation:
     
     # slack variables of bqm
     def _slacks(self, variables):
-        return [v for v in variables if v.startswith("S")]    
+        return [v for v in variables if v.startswith("S")]
+
+    # checks if variable is slack
+    def is_slack(self, var):
+        return var.startswith("S")
 
     # extracts information from varialble name
     def _var_to_ids(self, var):
@@ -267,9 +271,9 @@ class QuboFormulation:
         self._add_link_cost(bqm, netw)
 
         # cost constraints
-        self._node_res_constraints(bqm, netw, self._discretization, lagrange_multiplier=10)
+        # self._node_res_constraints(bqm, netw, self._discretization, lagrange_multiplier=10)
         # self._link_res_constraints(bqm, netw, self._discretization, lagrange_multiplier=10)
-        # self._link_drawback_constraints(bqm, netw, self._discretization, lagrange_multiplier=10)
+        self._link_drawback_constraints(bqm, netw, self._discretization, lagrange_multiplier=10)
 
         # structure constraints
         self._vnf_allocation_constraint(bqm, netw, lagrange_multiplier = 10) # multiplier to tweak

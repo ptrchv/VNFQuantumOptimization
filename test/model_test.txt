@@ -1,0 +1,26 @@
+- node res constraint (exact solver):
+    pre)
+        - 4 nodes graph (star, 3 links)
+        - equal cost for allocation (no preferred nodes)
+        - chain length 3
+        - only one resource
+    1) not sufficient node resources for allocation of any node -> sol with no allocation
+    2) 3 nodes with only one possible vnf allocation, 4th no allocation -> sol no allocation on wrong node
+    3) 3 nodes with allocatation of 2 vnf possible, 4th no allocation -> node correctly reused in some solutions
+ 
+- link bandwidth
+    pre)
+        - 4 nodes graph (star, 3 links)
+        - chain lenght 3 (3 vnf)
+    1) not sufficient bandwidith for allocation -> sol with no allocation
+    2) all link offer possible allocation -> sol with allocation anywhere
+    3) 1 link with no sufficient bandwidth -> sol with no allocation on link
+    4) all link offer possibile allocation, one costs less -> cheap link always used
+ 
+- link delay
+     pre)
+        - 4 nodes graph (star, 3 links)
+        - chain lenght 3 (3 vnf)
+    1) all links offer low delay -> sol with allocation anywhere
+    2) one link with more delay than chain -> sol where link in not used
+    3) one link in combination with any of the others more delay that chain -> sol where link is not used

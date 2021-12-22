@@ -9,9 +9,10 @@ from vnfplacement.defines import TypeVNF, NodeProperty, LinkProperty, PropertyTy
 import networkx as nx
 import matplotlib
 import matplotlib.pyplot as plt
-
-
-
+import config
+from dwave.cloud import Client
+from dwave.system.samplers import DWaveSampler
+from dwave.system.composites import EmbeddingComposite
 
 
 # %% settings
@@ -57,9 +58,9 @@ net.draw()
 
 #%% TEST VNF and SFC classes
 #requirements
-req1 = {NodeProperty.MEMORY : 3}
-req2 = {NodeProperty.MEMORY : 3}
-req3 = {NodeProperty.MEMORY : 3}
+req1 = {NodeProperty.MEMORY : 2}
+req2 = {NodeProperty.MEMORY : 2}
+req3 = {NodeProperty.MEMORY : 2}
 
 # vnf
 vnf1 = VNF(TypeVNF.FIREWALL, req1)
@@ -68,30 +69,57 @@ vnf3 = VNF(TypeVNF.BUSINESS_LOGIC, req3)
 
 # sfc1
 sfc = SFC("SIMPLE SFC")
-sfc.set_properties(PropertyType.DRAWBACK, {LinkProperty.DELAY : 1.2})
+sfc.set_properties(PropertyType.DRAWBACK, {LinkProperty.DELAY : 0.8})
 sfc.set_properties(PropertyType.RESOURCE, {LinkProperty.BANDWIDTH: 1.2})
 sfc = sfc.append_vnf(vnf1).append_vnf(vnf2).append_vnf(vnf3)#.append_vnf(vnf2)
 
 # sfc2
 sfc2 = SFC("SIMPLE SFC2")
-sfc2.set_properties(PropertyType.DRAWBACK, {LinkProperty.DELAY : 1.2})
+sfc2.set_properties(PropertyType.DRAWBACK, {LinkProperty.DELAY : 0.8})
 sfc2.set_properties(PropertyType.RESOURCE, {LinkProperty.BANDWIDTH: 1.2})
 sfc2 = sfc2.append_vnf(vnf1).append_vnf(vnf2).append_vnf(vnf3).append_vnf(vnf2)
 #print(sfc2)
 
 # %%
 # add node resources
-node_res = {NodeProperty.MEMORY : 1}
+node_res = {NodeProperty.MEMORY : 3}
 node_costs = {NodeProperty.MEMORY : 1}
-for n in list(net.nodes):
-    net.set_node_properties(n, PropertyType.RESOURCE, node_res)
-    net.set_node_properties(n, PropertyType.COST, node_costs)
+# for n in list(net.nodes):
+#     net.set_node_properties(n, PropertyType.RESOURCE, node_res)
+#     net.set_node_properties(n, PropertyType.COST, node_costs)
+
+## Manual node test #########
+node_res3 = {NodeProperty.MEMORY : 4}
+node_res1 = {NodeProperty.MEMORY : 1}
+net.set_node_properties(0, PropertyType.RESOURCE, node_res3)
+net.set_node_properties(0, PropertyType.COST, node_costs)
+net.set_node_properties(1, PropertyType.RESOURCE, node_res1)
+net.set_node_properties(1, PropertyType.COST, node_costs)
+net.set_node_properties(2, PropertyType.RESOURCE, node_res3)
+net.set_node_properties(2, PropertyType.COST, node_costs)
+net.set_node_properties(3, PropertyType.RESOURCE, node_res3)
+net.set_node_properties(3, PropertyType.COST, node_costs)
+######################
+
+## Manual link test #########
+net.set_link_properties((0,2), PropertyType.RESOURCE, {LinkProperty.BANDWIDTH : 1})
+net.set_link_properties((0,2), PropertyType.COST, {LinkProperty.BANDWIDTH : 1})
+net.set_link_properties((0,2), PropertyType.DRAWBACK, {LinkProperty.DELAY : 0.6})
+
+net.set_link_properties((1,2), PropertyType.RESOURCE, {LinkProperty.BANDWIDTH : 1})
+net.set_link_properties((1,2), PropertyType.COST, {LinkProperty.BANDWIDTH : 1})
+net.set_link_properties((1,2), PropertyType.DRAWBACK, {LinkProperty.DELAY : 0.4})
+
+net.set_link_properties((2,3), PropertyType.RESOURCE, {LinkProperty.BANDWIDTH : 1})
+net.set_link_properties((2,3), PropertyType.COST, {LinkProperty.BANDWIDTH : 1})
+net.set_link_properties((2,3), PropertyType.DRAWBACK, {LinkProperty.DELAY : 0.4})
+#############################
 
 # add link resources
-for e in net.links:
-    net.set_link_properties(e, PropertyType.RESOURCE, {LinkProperty.BANDWIDTH : 1})
-    net.set_link_properties(e, PropertyType.COST, {LinkProperty.BANDWIDTH : 1})
-    net.set_link_properties(e, PropertyType.DRAWBACK, {LinkProperty.DELAY : 0.2})
+# for e in net.links:
+#     net.set_link_properties(e, PropertyType.RESOURCE, {LinkProperty.BANDWIDTH : 1})
+#     net.set_link_properties(e, PropertyType.COST, {LinkProperty.BANDWIDTH : 1})
+#     net.set_link_properties(e, PropertyType.DRAWBACK, {LinkProperty.DELAY : 0.2})
 
 #%%
 #print nodes and links
@@ -128,54 +156,62 @@ print("Number of variables:",len(qf.qubo.variables))
 # print(result.lowest())
 
 #sampleset = tabu.TabuSampler().sample(qf.qubo)
-sampleset = dimod.ExactSolver().sample(qf.qubo)
-optimum = sampleset.first.sample
+# sampleset = dimod.ExactSolver().sample(qf.qubo)
+# optimum = sampleset.first.sample
 
 
-#%%
-color_map = []
-chosen_node = []
-for var in optimum:
-    # print("var: {} set: {}".format(var,optimum[var]))
-    if optimum[var] == 1 and not "S" in var:
-        print(var)
-        nodei = qf._var_to_ids(var)[0][0]
-        nodef = qf._var_to_ids(var)[0][1]
-        chosen_node.append(nodei)
-        chosen_node.append(nodef)
+# #%%
+# color_map = []
+# chosen_node = []
+# for var in optimum:
+#     # print("var: {} set: {}".format(var,optimum[var]))
+#     if optimum[var] == 1 and not "S" in var:
+#         print(var)
+#         nodei = qf._var_to_ids(var)[0][0]
+#         nodef = qf._var_to_ids(var)[0][1]
+#         chosen_node.append(nodei)
+#         chosen_node.append(nodef)
 
-for node in net.nodes:
-    if node in chosen_node:
-        color_map.append('red')
-    else: 
-        color_map.append('cyan')
+# for node in net.nodes:
+#     if node in chosen_node:
+#         color_map.append('red')
+#     else: 
+#         color_map.append('cyan')
 
-nx.draw(net._pnet, node_color=color_map, with_labels=True)
+# nx.draw(net._pnet, node_color=color_map, with_labels=True)
 
 # %%
 #print variables at "1" in each solution
 # sampleset = dimod.ExactSolver().sample(qf.qubo).lowest()
 # samples = sampleset.samples()
-# for best in samples[:15]:
-#     cont = 0
-#     varList = []
-#     color_map = []
-#     chosen_node = []
-#     for var, val in best.items():
-#         if val == 1:
-#             varList.append(var)
-#             nodei = qf._var_to_ids(var)[0][0]
-#             nodef = qf._var_to_ids(var)[0][1]
-#             chosen_node.append(nodei)
-#             chosen_node.append(nodef)
-#     for node in net.nodes:
-#         if node in chosen_node:
-#             color_map.append('red')
-#         else: 
-#             color_map.append('cyan')
-#     fig, ax = plt.subplots(1,1)
-#     ax.text(-1, -1, str(varList), fontsize=10)
-#     nx.draw(net._pnet, node_color=color_map, with_labels=True, ax = ax)    
+
+client = Client.from_config(token=config.api_token)
+device = DWaveSampler()
+print(device)
+solver = EmbeddingComposite(device)
+# result = solver.sample(qf.qubo, num_reads = 20)
+samples = sampleset.samples()
+
+for best in samples:
+    cont = 0
+    varList = []
+    color_map = []
+    chosen_node = []
+    for var, val in best.items():
+        if val == 1 and not qf.is_slack(var):
+            varList.append(var)
+            nodei = qf._var_to_ids(var)[0][0]
+            nodef = qf._var_to_ids(var)[0][1]
+            chosen_node.append(nodei)
+            chosen_node.append(nodef)
+    for node in net.nodes:
+        if node in chosen_node:
+            color_map.append('red')
+        else: 
+            color_map.append('cyan')
+    fig, ax = plt.subplots(1,1)
+    ax.text(-1, -1, str(varList), fontsize=10)
+    nx.draw(net._pnet, node_color=color_map, with_labels=True, ax = ax)    
         
     
 
