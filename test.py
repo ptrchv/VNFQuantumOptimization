@@ -6,7 +6,7 @@ from vnfplacement.vnf import VNF
 from vnfplacement.sfc import SFC
 from vnfplacement.problem_network import ProblemNetwork
 from vnfplacement.qubo_form import QuboFormulation
-from vnfplacement.defines import TypeVNF, NodeProperty, LinkProperty, PropertyType
+from vnfplacement.defines import NodeProperty, LinkProperty, PropertyType
 import networkx as nx
 import matplotlib
 import matplotlib.pyplot as plt
@@ -32,9 +32,9 @@ net.draw()
 # req3 = {NodeProperty.CPU : 2, NodeProperty.MEMORY : 12, NodeProperty.STORAGE : 60}
 
 # # vnf
-# vnf1 = VNF(TypeVNF.FIREWALL, req1)
-# vnf2 = VNF(TypeVNF.IDS, req2)
-# vnf3 = VNF(TypeVNF.BUSINESS_LOGIC, req3)
+# vnf1 = VNF("FIREWALL", req1)
+# vnf2 = VNF("IDS", req2)
+# vnf3 = VNF("BUSINESS_LOGIC", req3)
 
 # # sfc
 # sfc = SFC("MOBILE_API")
@@ -64,9 +64,9 @@ req2 = {NodeProperty.MEMORY : 1}
 req3 = {NodeProperty.MEMORY : 1}
 
 # vnf
-vnf1 = VNF(TypeVNF.FIREWALL, req1)
-vnf2 = VNF(TypeVNF.IDS, req2)
-vnf3 = VNF(TypeVNF.BUSINESS_LOGIC, req3)
+vnf1 = VNF("FIREWALL", req1)
+vnf2 = VNF("IDS", req2)
+vnf3 = VNF("BUSINESS_LOGIC", req3)
 
 # sfc1
 sfc = SFC("SIMPLE SFC")

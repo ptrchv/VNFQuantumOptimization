@@ -1,12 +1,5 @@
 from enum import Enum
 
-class TypeVNF(Enum):
-    FIREWALL = 1
-    NAT = 2
-    IDS = 3
-    PROXY = 4
-    BUSINESS_LOGIC = 5
-
 class NodeProperty(Enum):
     CPU = 1         #num_cpu
     MEMORY = 2      #GB

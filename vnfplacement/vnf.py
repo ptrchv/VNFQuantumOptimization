@@ -1,9 +1,13 @@
 import os
 
 class VNF:
-    def __init__(self, typeVNF, requirements):
+    def __init__(self, name, requirements):
         self._requirements = requirements
-        self._typeVNF = typeVNF
+        self._name = name
+    
+    @property
+    def name(self):
+        return self._name
 
     @property
     def requirements(self):

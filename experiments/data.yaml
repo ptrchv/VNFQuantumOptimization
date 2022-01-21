@@ -1,0 +1,35 @@
+--- # test config
+vnfs:
+  - name: firewall 
+    cpu: 4
+    memory: 8
+  - name: ids
+    cpu: 2
+  - name: business_logic
+    cpu: 6
+    memory: 16
+
+sfcs:
+  - name: simple_vnf_1
+    vnfs: [firewall, ids]
+    resouce:
+      - bandwidth: 1.6
+    drawback:
+      - delay: 0.8
+  - name: simple_vnf_2"
+    vfns: [firewall, ids, business_logic]
+    resource:
+      - bandwidth: 1.2
+    drawback:
+      - delay: 0.6
+
+networks:
+  - name: net1
+    file: graph1.txt
+  - name: net2
+    file: graph2.txt
+
+tests:
+  - name: test1
+    net: net1
+    sfcs: [simple_vnf_1, simple_vnf_2]

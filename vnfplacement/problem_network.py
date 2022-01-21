@@ -7,6 +7,11 @@ class ProblemNetwork:
         for n in self._pnet.nodes():
             nx.set_node_attributes(self._pnet, {n: {"used": False}})
         self._sfcs = []
+
+    # serialization from yaml
+    def __init__(self, conf):
+        pass
+
     
     # TODO: add node and link informations, colors of server/entry_exit_points
     def draw(self):
