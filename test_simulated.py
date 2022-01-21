@@ -2,11 +2,13 @@
 import dimod
 from dimod import sampleset
 import tabu
+import neal
+import time
 from vnfplacement.vnf import VNF
 from vnfplacement.sfc import SFC
 from vnfplacement.problem_network import ProblemNetwork
 from vnfplacement.qubo_form import QuboFormulation
-from vnfplacement.defines import NodeProperty, LinkProperty, PropertyType
+from vnfplacement.defines import TypeVNF, NodeProperty, LinkProperty, PropertyType
 import networkx as nx
 import matplotlib
 import matplotlib.pyplot as plt
@@ -20,7 +22,7 @@ import dwave.inspector
 
 # %% settings
 init_seed = 333
-graph_size = 8
+graph_size = 15
 edge_prob = 0.4
 # %%
 net = ProblemNetwork(graph_size, edge_prob, init_seed)
@@ -34,9 +36,9 @@ net.draw()
 # req3 = {NodeProperty.CPU : 2, NodeProperty.MEMORY : 12, NodeProperty.STORAGE : 60}
 
 # # vnf
-# vnf1 = VNF("FIREWALL", req1)
-# vnf2 = VNF("IDS", req2)
-# vnf3 = VNF("BUSINESS_LOGIC", req3)
+# vnf1 = VNF(TypeVNF.FIREWALL, req1)
+# vnf2 = VNF(TypeVNF.IDS, req2)
+# vnf3 = VNF(TypeVNF.BUSINESS_LOGIC, req3)
 
 # # sfc
 # sfc = SFC("MOBILE_API")
@@ -66,9 +68,9 @@ req2 = {NodeProperty.MEMORY : 1}
 req3 = {NodeProperty.MEMORY : 1}
 
 # vnf
-vnf1 = VNF("FIREWALL", req1)
-vnf2 = VNF("IDS", req2)
-vnf3 = VNF("BUSINESS_LOGIC", req3)
+vnf1 = VNF(TypeVNF.FIREWALL, req1)
+vnf2 = VNF(TypeVNF.IDS, req2)
+vnf3 = VNF(TypeVNF.BUSINESS_LOGIC, req3)
 
 # sfc1
 sfc = SFC("SIMPLE SFC")
@@ -134,7 +136,7 @@ for e in net.links:
 #%%
 # Add sfc to network
 net = net.add_sfc(sfc)
-# net = net.add_sfc(sfc2)
+net = net.add_sfc(sfc2)
 #net = net.add_sfc(sfc)
 
 # %%
@@ -147,11 +149,14 @@ discretization = {
 }
 qf = QuboFormulation(discretization)
 qf.generate_qubo(net)
-#print(qf.qubo.variables)
-print("Number of variables:",len(qf.qubo.variables))
+# print(qf.qubo.variables)
 
-# # %%
-# solver = dimod.ExactSolver()
+# %%
+print("Number of variables:",len(qf.qubo.variables))
+solver = neal.SimulatedAnnealingSampler()
+start_time = time.time()
+sampleset = solver.sample(qf.qubo, num_reads=10)
+print("--- %s seconds ---" % (time.time() - start_time))
 # #solver = tabu.TabuSampler()
 # # device = DWaveSampler()
 # # solver = EmbeddingComposite(device)
@@ -160,71 +165,71 @@ print("Number of variables:",len(qf.qubo.variables))
 
 #sampleset = tabu.TabuSampler().sample(qf.qubo)
 # sampleset = dimod.ExactSolver().sample(qf.qubo)
-# optimum = sampleset.first.sample
+optimum = sampleset.first.sample
 
 
-# #%%
-# color_map = []
-# chosen_node = []
-# for var in optimum:
-#     # print("var: {} set: {}".format(var,optimum[var]))
-#     if optimum[var] == 1 and not "S" in var:
-#         print(var)
-#         nodei = qf._var_to_ids(var)[0][0]
-#         nodef = qf._var_to_ids(var)[0][1]
-#         chosen_node.append(nodei)
-#         chosen_node.append(nodef)
+#%%
+color_map = []
+chosen_node = []
+for var in optimum:
+    # print("var: {} set: {}".format(var,optimum[var]))
+    if optimum[var] == 1 and not "S" in var:
+        print(var)
+        nodei = qf._var_to_ids(var)[0][0]
+        nodef = qf._var_to_ids(var)[0][1]
+        chosen_node.append(nodei)
+        chosen_node.append(nodef)
 
-# for node in net.nodes:
-#     if node in chosen_node:
-#         color_map.append('red')
-#     else: 
-#         color_map.append('cyan')
+for node in net.nodes:
+    if node in chosen_node:
+        color_map.append('red')
+    else: 
+        color_map.append('cyan')
 
-# nx.draw(net._pnet, node_color=color_map, with_labels=True)
+nx.draw(net._pnet, node_color=color_map, with_labels=True)
 
 # %%
 #print variables at "1" in each solution
 # sampleset = dimod.ExactSolver().sample(qf.qubo).lowest()
 # samples = sampleset.samples()
 
-client = Client.from_config(token=config.api_token)
-print(client.get_solvers())
-device = DWaveSampler(token = config.api_token)
-print(device)
-solver = EmbeddingComposite(device)
-# solver = FixedEmbeddingComposite(device)
-sampleset = solver.sample(qf.qubo, num_reads = 1000, embedding_parameters=dict(timeout=200), chain_strength=50)
-print(sampleset)
-#sampleset = dimod.ExactSolver().sample(qf.qubo)
-inspector = dwave.inspector.show(sampleset)
-samples = sampleset.samples()
-#%%
-counter = 0
-threshold = 10
-for best, energy in sampleset.data(fields=['sample','energy'], sorted_by='energy'):
-    if counter < threshold:
-        counter += 1
-        cont = 0
-        varList = []
-        color_map = []
-        chosen_node = []
-        for var, val in best.items():
-            if val == 1:
-                if not qf.is_slack(var):   
-                    varList.append(var)  
-                    nodei = qf._var_to_ids(var)[0][0]
-                    nodef = qf._var_to_ids(var)[0][1]
-                    chosen_node.append(nodei)
-                    chosen_node.append(nodef)
-        for node in net.nodes:
-            if node in chosen_node:
-                color_map.append('red')
-            else: 
-                color_map.append('cyan')
-        fig, ax = plt.subplots(1,1)
-        ax.text(-1, -1, str(varList) + str(energy), fontsize=10)
-        nx.draw(net._pnet, node_color=color_map, with_labels=True, ax = ax)    
+# client = Client.from_config(token=config.api_token)
+# print(client.get_solvers())
+# device = DWaveSampler(token = config.api_token)
+# print(device)
+# solver = EmbeddingComposite(device)
+# # solver = FixedEmbeddingComposite(device)
+# sampleset = solver.sample(qf.qubo, num_reads = 5000, embedding_parameters=dict(timeout=200), chain_strength=10000)
+# print(sampleset)
+# #sampleset = dimod.ExactSolver().sample(qf.qubo)
+# inspector = dwave.inspector.show(sampleset)
+# samples = sampleset.samples()
+# #%%
+# counter = 0
+# threshold = 10
+# for best, energy in sampleset.data(fields=['sample','energy'], sorted_by='energy'):
+#     if counter < threshold:
+#         counter += 1
+#         cont = 0
+#         varList = []
+#         color_map = []
+#         chosen_node = []
+#         for var, val in best.items():
+#             if val == 1:
+#                 if not qf.is_slack(var):   
+#                     varList.append(var)  
+#                     nodei = qf._var_to_ids(var)[0][0]
+#                     nodef = qf._var_to_ids(var)[0][1]
+#                     chosen_node.append(nodei)
+#                     chosen_node.append(nodef)
+#         for node in net.nodes:
+#             if node in chosen_node:
+#                 color_map.append('red')
+#             else: 
+#                 color_map.append('cyan')
+#         fig, ax = plt.subplots(1,1)
+#         ax.text(-1, -1, str(varList) + str(energy), fontsize=10)
+#         nx.draw(net._pnet, node_color=color_map, with_labels=True, ax = ax)    
         
     
 
