@@ -1,6 +1,6 @@
 --- # test config
 vnfs:
-  - name: firewall 
+  - name: firewall
     cpu: 4
     memory: 8
   - name: ids
@@ -10,18 +10,18 @@ vnfs:
     memory: 16
 
 sfcs:
-  - name: simple_vnf_1
+  - name: simple_sfc_1
     vnfs: [firewall, ids]
-    resouce:
-      - bandwidth: 1.6
-    drawback:
-      - delay: 0.8
-  - name: simple_vnf_2"
-    vfns: [firewall, ids, business_logic]
     resource:
-      - bandwidth: 1.2
+      bandwidth: 1.6
     drawback:
-      - delay: 0.6
+      delay: 0.8
+  - name: simple_sfc_2
+    vnfs: [firewall, ids, business_logic]
+    resource:
+      bandwidth: 1.2
+    drawback:
+      delay: 0.6
 
 networks:
   - name: net1

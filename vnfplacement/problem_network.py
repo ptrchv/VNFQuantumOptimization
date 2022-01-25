@@ -2,16 +2,23 @@ import networkx as nx
 import networkx as nx
 
 class ProblemNetwork:
-    def __init__(self, num_nodes, edge_prob, seed=None):
-        self._pnet = nx.fast_gnp_random_graph(num_nodes, edge_prob, seed, directed=False)
+    def __init__(self, net, sfcs = None):
+        # setup attributes
+        self._pnet = net
+        self._sfcs = sfcs if sfcs else []
+
+        # check if node is configured
         for n in self._pnet.nodes():
-            nx.set_node_attributes(self._pnet, {n: {"used": False}})
-        self._sfcs = []
-
-    # serialization from yaml
-    def __init__(self, conf):
-        pass
-
+            if not "used" in self._pnet.nodes[n]:
+                nx.set_node_attributes(self._pnet, {n: {"used": False}})
+            print(self._pnet.nodes[n])
+    
+    # randomly generate graph
+    @classmethod
+    def from_random_gen(cls, num_nodes, edge_prob, seed = None):
+        pnet = nx.fast_gnp_random_graph(num_nodes, edge_prob, seed, directed=False)
+        return cls(pnet)
+        
     
     # TODO: add node and link informations, colors of server/entry_exit_points
     def draw(self):
@@ -54,3 +61,6 @@ class ProblemNetwork:
 
     def is_used(self, nodeID):
         return self._pnet.nodes[nodeID]["used"]
+
+
+

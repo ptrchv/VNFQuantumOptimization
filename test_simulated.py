@@ -25,7 +25,7 @@ init_seed = 333
 graph_size = 15
 edge_prob = 0.4
 # %%
-net = ProblemNetwork(graph_size, edge_prob, init_seed)
+net = ProblemNetwork.from_random_gen(graph_size, edge_prob, init_seed)
 net.draw()
 # print(nx.adjacency_matrix(net.pnet))
 

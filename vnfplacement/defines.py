@@ -1,15 +1,15 @@
 from enum import Enum
 
 class NodeProperty(Enum):
-    CPU = 1         #num_cpu
-    MEMORY = 2      #GB
-    STORAGE = 3     #GB
+    CPU = 'cpu'             #num_cpu
+    MEMORY = 'memory'       #GB
+    STORAGE = 'storage'     #GB
 
 class LinkProperty(Enum):
-    BANDWIDTH = 1   #GBps
-    DELAY = 2       #ms
+    BANDWIDTH = 'bandwidth' #GBps
+    DELAY = 'delay'         #ms
 
 class PropertyType(Enum):
-    RESOURCE = 1
-    COST = 2
-    DRAWBACK = 3
+    RESOURCE = 'resource'
+    COST = 'cost'
+    DRAWBACK = 'drawback'

@@ -31,3 +31,6 @@ Update the "formula.tex" file in "res/tex" and use the script "res/equation_rend
 
 ## Open questions
 - the values of the properties must be multiple of the discretization (otherwise penalties on working solutions)
+
+## Resources
+https://pyvis.readthedocs.io/en/latest/index.html

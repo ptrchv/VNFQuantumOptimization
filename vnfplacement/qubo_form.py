@@ -1,6 +1,6 @@
 from types import new_class
 import dimod
-from vnfplacement.defines import TypeVNF, NodeProperty, LinkProperty, PropertyType
+from vnfplacement.defines import NodeProperty, LinkProperty, PropertyType
 import math
 
 class QuboFormulation:
