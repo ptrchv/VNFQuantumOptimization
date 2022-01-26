@@ -1,9 +1,11 @@
 import yaml
 from vnfplacement.problem_network import ProblemNetwork
+from vnfplacement.qubo_form import QuboFormulation
 from vnfplacement.sfc import SFC
 from vnfplacement.vnf import VNF
-from vnfplacement.defines import NodeProperty, LinkProperty, PropertyType
+from vnfplacement.defines import NodeProperty, LinkProperty, PropertyType, QuboExpression
 import networkx as nx
+import copy
 
 class YamlLoader:
     def __init__(self, fconf, fnet):
@@ -89,8 +91,31 @@ class YamlLoader:
         for c in self._cnf['networks']:
             name = c["name"]
             net = nx.read_gpickle(f'{fnet}/{c["file"]}')
-            self._networks[name] = ProblemNetwork(net)   
+            self._networks[name] = ProblemNetwork(net)
 
+
+    # generate test from fle
+    def build_test(self, ftest):
+        with open(ftest) as stream:
+            test_dict = yaml.safe_load(stream)
+
+        # create full problem network deepcopying elements
+        net = copy.deepcopy(self._networks[test_dict['network']])
+        for c in test_dict['sfcs']:
+            sfc = copy.deepcopy(self._sfcs[c])
+            net.add_sfc(sfc)
+
+        # read qubo settings
+        disabled = []
+        for term in test_dict['disabled']:
+            disabled.append(QuboExpression(term))
+        lagrange = {}
+        for k, v in test_dict['lagrange'].items():
+            lagrange[QuboExpression(k)] = v
+
+        # generated qubo
+        qf = QuboFormulation(net, disabled, lagrange, self._discretization)
+        return net, qf
 
 def main():
     loader = YamlLoader(
@@ -101,7 +126,10 @@ def main():
     # print(loader.vnfs)
     # print(loader.sfcs)
     # print(loader.networks)
-    print(loader.discretization)
+    # print(loader.discretization)
+
+    loader.build_test("./experiments/tests/test1.yaml")
+
    
 
 if __name__ == "__main__":

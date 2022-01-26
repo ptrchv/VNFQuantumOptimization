@@ -1,3 +1,4 @@
+from dis import dis
 from types import new_class
 import dimod
 from vnfplacement.defines import NodeProperty, LinkProperty, PropertyType
@@ -5,13 +6,23 @@ import math
 
 class QuboFormulation:
 
-    def __init__(self, discretization):
-        self._qubo = None
-        self._discretization = discretization
+    def __init__(self, netw, disabled, lagrange, discretization):
+        # save params
+        self._params = {
+            "disabled" : disabled,
+            "lagrange" : lagrange,
+            "discretization" : discretization
+        }
+        # generate qubo
+        self._qubo = self._generate_qubo(netw, disabled, lagrange, discretization)        
 
     @property
     def qubo(self):
         return self._qubo
+
+    @property
+    def params(self):
+        return self._params
 
     # non slack variables of bqm
     def _vars(self, variables):
@@ -233,7 +244,7 @@ class QuboFormulation:
 
             # for all resource types
             for d_type, d_max in sfc.get_properties(PropertyType.DRAWBACK).items():
-                print(d_type, d_max)              
+                # print(d_type, d_max)              
                 terms = []
                 for v in var_list:
                     linkID, _, _ = self._var_to_ids(v)
@@ -246,15 +257,15 @@ class QuboFormulation:
                 for s in range(num_slack_vars):
                     slack_name = f"S_LD_{s}_{cID}"
                     terms.append((slack_name, round(2**s)*discretization[d_type]))
-                print("------------------------------")
-                print(terms)
+                # print("------------------------------")
+                # print(terms)
                 bqm.add_linear_equality_constraint(
                             terms = terms,
                             lagrange_multiplier = lagrange_multiplier,
                             constant = -d_max
-                        )        
+                        )
 
-    def generate_qubo(self, netw):
+    def _generate_qubo(self, netw, disabled, lagrange, discretization):
         # create bmq instance
         bqm = dimod.BinaryQuadraticModel(dimod.BINARY)
 
@@ -271,9 +282,9 @@ class QuboFormulation:
         self._add_link_cost(bqm, netw)
 
         # cost constraints
-        self._node_res_constraints(bqm, netw, self._discretization, lagrange_multiplier=1)
-        self._link_res_constraints(bqm, netw, self._discretization, lagrange_multiplier=1)
-        self._link_drawback_constraints(bqm, netw, self._discretization, lagrange_multiplier=1)
+        self._node_res_constraints(bqm, netw, discretization, lagrange_multiplier=1)
+        self._link_res_constraints(bqm, netw, discretization, lagrange_multiplier=1)
+        self._link_drawback_constraints(bqm, netw, discretization, lagrange_multiplier=1)
 
         # structure constraints
         self._vnf_allocation_constraint(bqm, netw, lagrange_multiplier = 20) # multiplier to tweak

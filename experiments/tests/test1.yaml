@@ -1,4 +1,20 @@
-tests:
-  - name: test1
-    net: net1
-    sfcs: [simple_vnf_1, simple_vnf_2]
+name: test1
+network: net1
+sfcs: [simple_sfc_1, simple_sfc_2]
+disabled:
+  - node_cost
+  - link_cost
+  #- node_res
+  #- link_res
+  #- link_draw
+  #- allocation
+lagrange:
+  node_res: 1
+  link_res: 2
+  link_draw: 3
+  allocation: 4
+  continuity: 5
+
+
+
+

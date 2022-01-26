@@ -14,6 +14,7 @@ vnfs:
     memory: 8
   - name: ids
     cpu: 2
+    memory: 4
   - name: business_logic
     cpu: 6
     memory: 16
