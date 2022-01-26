@@ -11,7 +11,6 @@ class ProblemNetwork:
         for n in self._pnet.nodes():
             if not "used" in self._pnet.nodes[n]:
                 nx.set_node_attributes(self._pnet, {n: {"used": False}})
-            print(self._pnet.nodes[n])
     
     # randomly generate graph
     @classmethod

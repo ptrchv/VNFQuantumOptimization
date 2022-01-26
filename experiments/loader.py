@@ -3,11 +3,10 @@ from vnfplacement.problem_network import ProblemNetwork
 from vnfplacement.sfc import SFC
 from vnfplacement.vnf import VNF
 from vnfplacement.defines import NodeProperty, LinkProperty, PropertyType
-
-# TODO: use pickle to save graphs
+import networkx as nx
 
 class YamlLoader:
-    def __init__(self, fpath):
+    def __init__(self, fconf, fnet):
         # yaml conf
         self._cnf = None
 
@@ -15,9 +14,10 @@ class YamlLoader:
         self._vnfs = {}
         self._sfcs = {}
         self._networks = {}
+        self._discretization = {}
 
         # load the conf file
-        self._load_config(fpath)
+        self._load_config(fconf, fnet)
     
     @property
     def cnf(self):
@@ -29,14 +29,32 @@ class YamlLoader:
 
     @property
     def sfcs(self):
-        return self._sfcs    
+        return self._sfcs
+    
+    @property
+    def networks(self):
+        return self._networks
+
+    @property
+    def discretization(self):
+        return self._discretization
 
     # loads configuration file
-    def _load_config(self, path):
+    def _load_config(self, path, fnet):
         with open(path) as stream:
             self._cnf = yaml.safe_load(stream)
+        self._load_discretization()
         self._create_vnfs()
         self._create_sfcs()
+        self._load_networks(fnet)
+    
+    # load discretization from resource file
+    def _load_discretization(self):
+        for res, val in self._cnf['discretization']['node'].items():
+            self._discretization[NodeProperty(res)] =  val
+        for res, val in self._cnf['discretization']['link'].items():
+            self._discretization[LinkProperty(res)] =  val
+
 
     # creates vnfs from file definition
     def _create_vnfs(self):
@@ -66,13 +84,24 @@ class YamlLoader:
                 sfc.set_properties(ptype, properties)
             self._sfcs[sfc.name] = sfc
     
+    # load graphs from file
+    def _load_networks(self, fnet):
+        for c in self._cnf['networks']:
+            name = c["name"]
+            net = nx.read_gpickle(f'{fnet}/{c["file"]}')
+            self._networks[name] = ProblemNetwork(net)   
 
 
 def main():
-    loader = YamlLoader("./experiments/data.yaml")
-    #print(loader.cnf)    
-    print(loader.vnfs)
-    print(loader.sfcs)
+    loader = YamlLoader(
+        fconf = "./experiments/conf.yaml",
+        fnet = "./experiments/networks"
+    )
+    # print(loader.cnf)    
+    # print(loader.vnfs)
+    # print(loader.sfcs)
+    # print(loader.networks)
+    print(loader.discretization)
    
 
 if __name__ == "__main__":

@@ -1,0 +1,4 @@
+tests:
+  - name: test1
+    net: net1
+    sfcs: [simple_vnf_1, simple_vnf_2]

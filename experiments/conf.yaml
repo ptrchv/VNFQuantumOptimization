@@ -1,4 +1,13 @@
 --- # test config
+discretization:
+  node:
+    cpu: 1
+    memory: 2
+    storage: 50
+  link:
+    bandwidth: 1
+    delay: 1
+
 vnfs:
   - name: firewall
     cpu: 4
@@ -25,11 +34,6 @@ sfcs:
 
 networks:
   - name: net1
-    file: graph1.txt
+    file: graph1.gpickle
   - name: net2
-    file: graph2.txt
-
-tests:
-  - name: test1
-    net: net1
-    sfcs: [simple_vnf_1, simple_vnf_2]
+    file: graph2.gpickle
