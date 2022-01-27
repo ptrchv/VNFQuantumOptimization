@@ -34,4 +34,8 @@ Update the "formula.tex" file in "res/tex" and use the script "res/equation_rend
 
 ## Resources
 https://pyvis.readthedocs.io/en/latest/index.html
+
 https://www.yworks.com/products/yed
+
+## Problems
+For now vnfs are required to have need all the resources specified on the nodes.
