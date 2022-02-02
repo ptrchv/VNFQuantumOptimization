@@ -37,5 +37,10 @@ https://pyvis.readthedocs.io/en/latest/index.html
 
 https://www.yworks.com/products/yed
 
-## Problems
-For now vnfs are required to have need all the resources specified on the nodes.
+## Todo
+Enable selection of constraints in qubo formulation
+Read lagrange multiplier from configuration (not default)
+Visualization of loaded graph with pyvis (+ vnf allocation)
+Make enum more readable (maybe changing the representation)
+
+
