@@ -2,7 +2,7 @@
 discretization:
   node:
     cpu: 1
-    memory: 2
+    memory: 1
     storage: 50
   link:
     bandwidth: 1
@@ -10,31 +10,43 @@ discretization:
 
 vnfs:
   - name: firewall
-    cpu: 4
-    memory: 8
+    cpu: 3
+    memory: 2
   - name: ids
-    cpu: 2
+    cpu: 4
     memory: 4
-  - name: business_logic
-    cpu: 6
-    memory: 16
+  - name: nat
+    cpu: 1
+    memory: 2
+  - name: reverse-proxy
+    cpu: 3
+    memory: 4
+  - name: waf
+    cpu: 3
+    memory: 3
 
 sfcs:
-  - name: simple_sfc_1
-    vnfs: [firewall, ids]
+  - name: simple_secaas
+    vnfs: [nat, firewall]
     resource:
-      bandwidth: 1.6
+      bandwidth: 1
     drawback:
-      delay: 0.8
-  - name: simple_sfc_2
-    vnfs: [firewall, ids, business_logic]
+      delay: 2.0
+  - name: medium_secaas
+    vnfs: [firewall, ids, reverse-proxy]
     resource:
-      bandwidth: 1.2
+      bandwidth: 2
     drawback:
-      delay: 0.6
+      delay: 3.0
+  - name: complex_secaas
+    vnfs: [nat, firewall, ids, reverse-proxy, waf]
+    resource:
+      bandwidth: 3
+    drawback:
+      delay: 5.0
 
 networks:
   - name: net1
-    file: graph1.gpickle
+    file: net00_small_conn_4_6.graphml
   - name: net2
-    file: graph2.gpickle
+    file: net01_small_conn_5_8.graphml

@@ -5,6 +5,7 @@ from vnfplacement.sfc import SFC
 from vnfplacement.vnf import VNF
 from vnfplacement.defines import NodeProperty, LinkProperty, PropertyType, QuboExpression
 import networkx as nx
+from experiments.networks.network_loader import NetworkLoader
 import copy
 
 class YamlLoader:
@@ -90,8 +91,7 @@ class YamlLoader:
     def _load_networks(self, fnet):
         for c in self._cnf['networks']:
             name = c["name"]
-            net = nx.read_gpickle(f'{fnet}/{c["file"]}')
-            self._networks[name] = ProblemNetwork(net)
+            self._networks[name] = NetworkLoader.from_graphml(f'{fnet}/{c["file"]}')
 
 
     # generate test from fle
@@ -120,12 +120,12 @@ class YamlLoader:
 def main():
     loader = YamlLoader(
         fconf = "./experiments/conf.yaml",
-        fnet = "./experiments/networks"
+        fnet = "./experiments/networks/graphml"
     )
     # print(loader.cnf)    
     # print(loader.vnfs)
     # print(loader.sfcs)
-    # print(loader.networks)
+    print(loader.networks["net1"].net.nodes(data = True))
     # print(loader.discretization)
 
     loader.build_test("./experiments/tests/test1.yaml")

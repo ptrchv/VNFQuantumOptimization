@@ -3,3 +3,4 @@ numpy
 dwave-ocean-sdk
 matplotlib
 pyyaml
+pyvis

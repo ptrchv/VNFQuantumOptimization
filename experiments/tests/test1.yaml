@@ -1,6 +1,6 @@
 name: test1
 network: net1
-sfcs: [simple_sfc_1, simple_sfc_2]
+sfcs: [simple_secaas]
 disabled:
   - node_cost
   - link_cost

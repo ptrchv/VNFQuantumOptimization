@@ -32,6 +32,10 @@ class ProblemNetwork:
         return self._pnet.edges
 
     @property
+    def net(self):
+        return self._pnet
+
+    @property
     def sfcs(self):
         return {k:v for k,v in enumerate(self._sfcs)}
 
