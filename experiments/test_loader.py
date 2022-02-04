@@ -5,7 +5,7 @@ from vnfplacement.sfc import SFC
 from vnfplacement.vnf import VNF
 from vnfplacement.defines import NodeProperty, LinkProperty, PropertyType, QuboExpression
 import networkx as nx
-from experiments.networks.network_loader import NetworkLoader
+from experiments.network_loader import NetworkLoader
 import copy
 
 class YamlLoader:
