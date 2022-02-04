@@ -125,10 +125,11 @@ def main():
     # print(loader.cnf)    
     # print(loader.vnfs)
     # print(loader.sfcs)
-    print(loader.networks["net1"].net.nodes(data = True))
+    # print(loader.networks["net1"].net.nodes(data = True))
     # print(loader.discretization)
 
-    loader.build_test("./experiments/tests/test1.yaml")
+    _, qb = loader.build_test("./experiments/tests/test1.yaml")
+    # print(qb.params)
 
    
 

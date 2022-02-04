@@ -1,7 +1,7 @@
 from dis import dis
 from types import new_class
 import dimod
-from vnfplacement.defines import NodeProperty, LinkProperty, PropertyType
+from vnfplacement.defines import NodeProperty, LinkProperty, PropertyType, QuboExpression
 import math
 
 class QuboFormulation:
@@ -275,29 +275,43 @@ class QuboFormulation:
                 raise ValueError(f"{sfc} is an empty SFC")
 
         # model variables
+        print("Building QUBO with:")
         self._create_variables(bqm, netw)
 
         # cost function
-        self._add_node_cost(bqm, netw)
-        self._add_link_cost(bqm, netw)
+        if not QuboExpression.NODE_COST in disabled:
+            self._add_node_cost(bqm, netw)
+            print("\tNODE COST")      
+        if not QuboExpression.LINK_COST in disabled:
+            self._add_link_cost(bqm, netw)
+            print("\tLINK COST")   
 
         # cost constraints
-        self._node_res_constraints(bqm, netw, discretization, lagrange_multiplier=1)
-        self._link_res_constraints(bqm, netw, discretization, lagrange_multiplier=1)
-        self._link_drawback_constraints(bqm, netw, discretization, lagrange_multiplier=1)
+        if not QuboExpression.NODE_RES in disabled:
+            self._node_res_constraints(bqm, netw, discretization, lagrange_multiplier = lagrange[QuboExpression.NODE_RES])
+            print("\t- NODE RES")   
+        if not QuboExpression.LINK_RES in disabled:
+            self._link_res_constraints(bqm, netw, discretization, lagrange_multiplier = lagrange[QuboExpression.LINK_RES])
+            print("\t- LINK_RES")   
+        if not QuboExpression.LINK_DRAW in disabled:
+            self._link_drawback_constraints(bqm, netw, discretization, lagrange_multiplier = lagrange[QuboExpression.LINK_DRAW])
+            print("\t- LINK_DRAW")   
 
         # structure constraints
-        self._vnf_allocation_constraint(bqm, netw, lagrange_multiplier = 20) # multiplier to tweak
-        self._sfc_continuity_constraint(bqm, netw, lagrange_multiplier = 30) # multiplier to tweak
-
-        #print(bqm.variables)
-        # print("---------------")
-        # print(len(self._vars(bqm.variables)))
-        # print(self._vars(bqm.variables))
-        # print("---------------")
-        # print(len(self._slacks(bqm.variables)))
-        # print(self._slacks(bqm.variables))
-
-        # print(sorted(list(bqm.variables)) == sorted(list(self._vars(bqm.variables))))
+        if not QuboExpression.ALLOCATION in disabled:
+            self._vnf_allocation_constraint(bqm, netw, lagrange_multiplier = lagrange[QuboExpression.ALLOCATION])
+            print("\t- ALLOCATION")   
+        if not QuboExpression.CONTINUITY in disabled:
+            self._sfc_continuity_constraint(bqm, netw, lagrange_multiplier = lagrange[QuboExpression.CONTINUITY])
+            print("\t- CONTINUITY")   
 
         self._qubo = bqm
+
+
+def main():
+    pass
+
+
+
+if __name__ == "__main__":
+    main()
