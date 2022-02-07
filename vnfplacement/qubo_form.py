@@ -305,7 +305,7 @@ class QuboFormulation:
             self._sfc_continuity_constraint(bqm, netw, lagrange_multiplier = lagrange[QuboExpression.CONTINUITY])
             print("\t- CONTINUITY")   
 
-        self._qubo = bqm
+        return bqm
 
 
 def main():

@@ -15,7 +15,6 @@ class PropertyType(Enum):
     COST = 'cost'
     DRAWBACK = 'drawback'
 
-
 class QuboExpression(Enum):
     NODE_COST = "node_cost"
     LINK_COST = 'link_cost'

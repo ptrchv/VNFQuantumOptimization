@@ -122,11 +122,12 @@ def main():
         fconf = "./experiments/conf.yaml",
         fnet = "./experiments/networks/graphml"
     )
-    # print(loader.cnf)    
-    # print(loader.vnfs)
-    # print(loader.sfcs)
-    # print(loader.networks["net1"].net.nodes(data = True))
-    # print(loader.discretization)
+
+    #print(loader.cnf)    
+    #print(loader.vnfs)
+    #print(loader.sfcs)
+    #print(loader.networks["net1"].net.nodes(data = True))
+    #print(loader.discretization)
 
     _, qb = loader.build_test("./experiments/tests/test1.yaml")
     # print(qb.params)
