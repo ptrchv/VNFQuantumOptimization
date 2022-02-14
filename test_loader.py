@@ -7,6 +7,7 @@ from vnfplacement.defines import NodeProperty, LinkProperty, PropertyType, QuboE
 import networkx as nx
 from experiments.network_loader import NetworkLoader
 import copy
+import time
 
 class YamlLoader:
     def __init__(self, fconf, fnet):
@@ -114,8 +115,11 @@ class YamlLoader:
             lagrange[QuboExpression(k)] = v
 
         # generated qubo
+        start_time = time.time()
         qf = QuboFormulation(net, disabled, lagrange, self._discretization)
-        return net, qf
+        end_time = time.time() - start_time
+
+        return net, qf, end_time
 
 def main():
     loader = YamlLoader(

@@ -4,7 +4,7 @@ from lib2to3.pytree import Node
 import os
 
 from vnfplacement.problem_network import ProblemNetwork
-os.chdir('/home/pietro/Documents/PhD/VNFQuantumOptimization/')
+#os.chdir('/home/pietro/Documents/PhD/VNFQuantumOptimization/')
 
 
 #%%

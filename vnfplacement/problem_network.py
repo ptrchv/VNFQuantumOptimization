@@ -1,5 +1,4 @@
 import networkx as nx
-import networkx as nx
 
 class ProblemNetwork:
     def __init__(self, net, sfcs = None):

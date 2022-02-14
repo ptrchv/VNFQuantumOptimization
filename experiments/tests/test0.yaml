@@ -1,5 +1,5 @@
-name: test1
-network: net1
+name: test0
+network: net0
 sfcs: [simple_secaas]
 disabled:
   - node_cost
@@ -9,11 +9,11 @@ disabled:
   #- link_draw
   #- allocation
 lagrange:
-  node_res: 1
+  node_res: 2
   link_res: 2
-  link_draw: 3
-  allocation: 4
-  continuity: 5
+  link_draw: 2
+  allocation: 20
+  continuity: 20
 
 
 
