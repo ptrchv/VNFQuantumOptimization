@@ -1,0 +1,16 @@
+name: test32
+network: net2
+sfcs: [simple_secaas,medium_secaas]
+disabled:
+  #- node_cost
+  #- link_cost
+  - node_res
+  - link_res
+  - link_draw
+  #- allocation
+lagrange:
+  node_res: 1
+  link_res: 1
+  link_draw: 1
+  allocation: 15
+  continuity: 15

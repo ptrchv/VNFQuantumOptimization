@@ -56,9 +56,12 @@ class NetworkLoader:
                 str_list = name.split("_")
                 if len(str_list) != 2:
                     continue
-                ptype = PropertyType(str_list[0])
-                nprop = NodeProperty(str_list[1])
-                node_properties[ptype][nprop] = val
+                try:
+                    ptype = PropertyType(str_list[0])
+                    nprop = NodeProperty(str_list[1])
+                    node_properties[ptype][nprop] = val
+                except ValueError as e:
+                    print("Property {} of node not recognized: {}".format(name,e))
             for ptype, properties in node_properties.items():
                 net.set_node_properties(nid, ptype, properties)        
 

@@ -71,8 +71,9 @@ def qubo_random_gen(init_seed, graph_size, edge_prob, num_sfcs, num_vnfs):
         QuboExpression.CONTINUITY: 20
     }
 
-    disabled = [QuboExpression.NODE_COST, QuboExpression.LINK_COST]
-
+    # disabled = [QuboExpression.NODE_COST, QuboExpression.LINK_COST]
+    disabled = []
+    
     # generating QUBO formulation
     qf = QuboFormulation(net, disabled, lagranges, discretization)
     end_form = time.time() - start_form
@@ -388,19 +389,21 @@ def test_from_file(test_name, topology, sfc_name, num_reads, result_csv, sfc_num
 
 # %%
 
-t_name = "test0"
+t_name = "test82"
 
 test_from_file(
-    t_name,"net0", sfc_name="simple_secaas", num_reads=1000, result_csv="results/"+t_name+".csv", sfc_num=1, vnf_num=2, sample_path="results/"+t_name+"/",chain_strength=100,emb_timeout=200,solver="sa", num_samples=3, anneal_time=20
+    t_name,"net1", sfc_name="medium_secaas", num_reads=10000, result_csv="results/"+t_name+".csv", sfc_num=1, vnf_num=3, sample_path="results/"+t_name+"/",chain_strength=50,emb_timeout=200,solver="qa", num_samples=3, anneal_time=40
 )
 
 
 # auto_test_classic_solver(
-#     seed=333,conn=0.4,min_nodes=18,
-#     min_sfc=5,min_vnf=3,max_nodes=19,max_sfc=6,max_vnf=4,num_read=10,filepath="results/auto/"
+#     seed=333,conn=0.4,min_nodes=3,
+#     min_sfc=1,min_vnf=2,max_nodes=13,max_sfc=4,max_vnf=5,num_read=100,filepath="results/auto/"
 # )
 
 
 
 
 
+
+# %%

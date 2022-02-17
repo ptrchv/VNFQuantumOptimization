@@ -1,0 +1,17 @@
+name: test82
+network: net1
+sfcs: [medium_secaas]
+disabled:
+  - node_cost
+  - link_cost
+  #- node_res
+  - link_res
+  - link_draw
+  - allocation
+  - continuity
+lagrange:
+  node_res: 2
+  link_res: 2
+  link_draw: 2
+  allocation: 15
+  continuity: 15

@@ -1,0 +1,16 @@
+name: test36
+network: net2
+sfcs: [simple_secaas,medium_secaas]
+disabled:
+  #- node_cost
+  #- link_cost
+  #- node_res
+  #- link_res
+  #- link_draw
+  #- allocation
+lagrange:
+  node_res: 3
+  link_res: 3
+  link_draw: 3
+  allocation: 30
+  continuity: 30

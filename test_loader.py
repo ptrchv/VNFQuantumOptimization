@@ -108,8 +108,9 @@ class YamlLoader:
 
         # read qubo settings
         disabled = []
-        for term in test_dict['disabled']:
-            disabled.append(QuboExpression(term))
+        if not test_dict['disabled'] is None:
+            for term in test_dict['disabled']:
+                disabled.append(QuboExpression(term))
         lagrange = {}
         for k, v in test_dict['lagrange'].items():
             lagrange[QuboExpression(k)] = v

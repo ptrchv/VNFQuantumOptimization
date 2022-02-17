@@ -1,0 +1,16 @@
+name: test62
+network: net3c
+sfcs: [complex_secaas, complex_secaas, complex_secaas, complex_secaas]
+disabled:
+  #- node_cost
+  #- link_cost
+  - node_res
+  - link_res
+  - link_draw
+  #- allocation
+lagrange:
+  node_res: 2
+  link_res: 2
+  link_draw: 2
+  allocation: 20
+  continuity: 20
