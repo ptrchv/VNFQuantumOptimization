@@ -1,0 +1,16 @@
+name: test75
+network: net1
+sfcs: [medium_secaas]
+disabled:
+  #- node_cost
+  #- link_cost
+  #- node_res
+  #- link_res
+  #- link_draw
+  #- allocation
+lagrange:
+  node_res: 20
+  link_res: 20
+  link_draw: 20
+  allocation: 50
+  continuity: 50

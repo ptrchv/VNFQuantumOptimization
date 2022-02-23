@@ -1,0 +1,16 @@
+name: test69
+network: net3c
+sfcs: [simple_secaas, medium_secaas]
+disabled:
+  #- node_cost
+  #- link_cost
+  - node_res
+  - link_res
+  - link_draw
+  #- allocation
+lagrange:
+  node_res: 2
+  link_res: 2
+  link_draw: 2
+  allocation: 50
+  continuity: 50

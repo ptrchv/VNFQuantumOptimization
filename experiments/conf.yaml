@@ -50,17 +50,25 @@ networks:
     file: net00_small_conn_4_6.graphml
   - name: net1
     file: net01_small_conn_5_8.graphml
+  - name: net1b
+    file: net01b_small_conn_5_8.graphml
   - name: net2
     file: net02_medium_conn_10_17.graphml
   - name: net3
     file: net03_medium_cluster_8_11.graphml
-  # - name: net4
-  #   file: net04_medium_conn_15_38.graphml
+  - name: net3b
+    file: net03b_medium_cluster_8_11.graphml
+  - name: net3c
+    file: net03c_medium_cluster_conn_7_12.graphml
+  - name: net4
+    file: net04_medium_conn_15_38.graphml
   - name: net5
     file: net05_medium_cluster_15_24.graphml
   - name: net6
     file: net06_large_cluster_32_49.graphml
-  # - name: net7
-  #   file: net07_large_garr201201_61_89.graphml
+  - name: net7
+    file: net07_large_garr201201_61_89.graphml
+  - name: net7b
+    file: net07b_large_garr201201_61_89.graphml
   - name: net8
     file: net08_xlarge_cluster_100_162.graphml

@@ -2,8 +2,8 @@ name: test0
 network: net0
 sfcs: [simple_secaas]
 disabled:
-  - node_cost
-  - link_cost
+  #- node_cost
+  #- link_cost
   #- node_res
   #- link_res
   #- link_draw
