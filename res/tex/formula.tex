@@ -1,8 +1,8 @@
 %cost_function
 $$
-cost = 
-    \sum_{i,j\neq i,p,q \neq q_L,w} {L^{ij}_{pq} \cdot R^{w}_{pq} \cdot(C_{i}+C_{j} \cdot \delta_{sel}(q))} + 
-    \sum_{i,j \neq i,p,q \neq q_L,w} L^{ij}_{pq} \cdot B_p \cdot  C_{ij}
+E_{cost} = 
+    \sum_{i,j\neq i,p,q \neq q_L,w} {L^{ij}_{pq} \cdot (R^{w}_{pq} \cdot C^{w}_{i} + R^{w}_{pq+1} \cdot C^{w}_{j} \cdot \delta_{sel}(q+1))} + 
+    \sum_{i,j \neq i,p,q \neq q_L} L^{ij}_{pq} \cdot B_p \cdot  C_{ij}
 $$
 
 %node_resources
