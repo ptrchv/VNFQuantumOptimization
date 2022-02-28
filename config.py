@@ -1,1 +1,1 @@
-api_token = "DEV-7ccc309dd363b224adde420fad9344d09b2e79c3"
+api_token = ""

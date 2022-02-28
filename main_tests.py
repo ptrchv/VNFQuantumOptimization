@@ -102,7 +102,7 @@ def qa_solver(qf, reads, chain_str, timeout_emb, anneal_time):
     device = DWaveSampler(token = config.api_token)
     print(device)
     solver = EmbeddingComposite(device)
-    sampleset = solver.sample(qf.qubo, num_reads=reads, embedding_parameters=dict(timeout=timeout_emb), chain_strength=chain_str, annealing_time=anneal_time)
+    sampleset = solver.sample(qf.qubo, label="VNF Project", num_reads=reads, embedding_parameters=dict(timeout=timeout_emb), chain_strength=chain_str, annealing_time=anneal_time)
     optimum = sampleset.first.sample
     dwave.inspector.show(sampleset)
 
@@ -389,16 +389,16 @@ def test_from_file(test_name, topology, sfc_name, num_reads, result_csv, sfc_num
 
 # %%
 
-t_name = "test82"
+t_name = "test33b"
 
 test_from_file(
-    t_name,"net1", sfc_name="medium_secaas", num_reads=10000, result_csv="results/"+t_name+".csv", sfc_num=1, vnf_num=3, sample_path="results/"+t_name+"/",chain_strength=50,emb_timeout=200,solver="qa", num_samples=3, anneal_time=40
+    t_name,"net2", sfc_name="simple+medium", num_reads=10000, result_csv="results/"+t_name+".csv", sfc_num=1, vnf_num=3, sample_path="results/"+t_name+"/",chain_strength=150,emb_timeout=200,solver="qa", num_samples=3, anneal_time=50
 )
 
 
 # auto_test_classic_solver(
-#     seed=333,conn=0.4,min_nodes=3,
-#     min_sfc=1,min_vnf=2,max_nodes=13,max_sfc=4,max_vnf=5,num_read=100,filepath="results/auto/"
+#     seed=333,conn=0.4,min_nodes=20,
+#     min_sfc=1,min_vnf=2,max_nodes=21,max_sfc=5,max_vnf=7,num_read=10,filepath="results/auto/"
 # )
 
 
