@@ -1,4 +1,5 @@
 # VNF Quantum Optimization
+This repository contains the source code for the article "Virtual Network Function Embedding with Quantum Annealing" accepted at [QCE22 - IEEE International Conference on Quantum Computing and Engineering](https://qce.quantum.ieee.org/2022/)
 
 ## Formulation
 Cost function for node and link operation:
@@ -29,18 +30,9 @@ Constraint on SFC link induced delay:
 ## Change formulas
 Update the "formula.tex" file in "res/tex" and use the script "res/equation_render.py" to regenerate the images.
 
-## Open questions
-- the values of the properties must be multiple of the discretization (otherwise penalties on working solutions)
 
-## Resources
+## External resources
 https://pyvis.readthedocs.io/en/latest/index.html
-
 https://www.yworks.com/products/yed
-
-## Todo
-Enable selection of constraints in qubo formulation
-Read lagrange multiplier from configuration (not default)
-Visualization of loaded graph with pyvis (+ vnf allocation)
-Make enum more readable (maybe changing the representation)
 
 
